@@ -172,6 +172,7 @@
                                                 <option value="no">No</option>
                                                 <option value="yes">Yes</option>
                                             </select>
+                                            <span class="font-bold text-slate-500 w-32">If yes, sound will play only once when conditions are met.</span>
                                         </div>
                                     </div>
                                 </template>
@@ -212,7 +213,7 @@
                                     </button>
                                 </div>
                                 <div v-if="block.conditions.length === 0" class="text-slate-400 italic text-[11px]">
-                                    No conditional requirements attached.
+                                    No conditional requirements set, sound will play constantly.
                                 </div>
                                 <div v-for="(cond, cIdx) in block.conditions" :key="cIdx" class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded p-1.5 shadow-2xs relative">
                                     <div class="flex items-center gap-1">
@@ -337,15 +338,17 @@
                     blocks.value = [];
                     let i = 0;
                     let currentRawText = [];
-
+                    let hasProcessedABlock = false;
+                
                     const flushRawText = () => {
-                        // Clean up consecutive leading/trailing blank lines in the raw block
-                        while(currentRawText.length && currentRawText[currentRawText.length - 1].trim() === '') {
-                            currentRawText.pop();
+                        // Only flush if we've already seen at least one sound block
+                        if (!hasProcessedABlock) {
+                            currentRawText = [];
+                            return;
                         }
-                        while(currentRawText.length && currentRawText[0].trim() === '') {
-                            currentRawText.shift();
-                        }
+                
+                        while(currentRawText.length && currentRawText[currentRawText.length - 1].trim() === '') currentRawText.pop();
+                        while(currentRawText.length && currentRawText[0].trim() === '') currentRawText.shift();
                         
                         if (currentRawText.length > 0) {
                             blocks.value.push({
@@ -358,15 +361,16 @@
                             currentRawText = [];
                         }
                     };
-
+                
+                    // The while loop must be OUTSIDE flushRawText
                     while (i < lines.length) {
                         let lineStr = lines[i];
-                        let line = lineStr.trim();
-                        let lowerLine = line.toLowerCase();
-
+                        let lowerLine = lineStr.trim().toLowerCase();
+                
                         if (lowerLine === '[sound]' || lowerLine === '[loopsound]') {
                             flushRawText();
-
+                            hasProcessedABlock = true;
+                
                             const isLoop = lowerLine === '[loopsound]';
                             let filename = '';
                             let sampleRate = '44100';
@@ -386,7 +390,7 @@
                                 volume = (lines[i+2] || '').trim();
                                 i += 3;
                             }
-
+                
                             let block = {
                                 id: `b-${Date.now()}-${Math.random()}`,
                                 type: isLoop ? 'loopsound' : 'sound',
@@ -404,24 +408,22 @@
                                 conditions: [],
                                 curves: []
                             };
-
+                
                             let currentCurve = null;
-
-                            // Linear sub-loop mapping exact expected arguments for the block properties
+                
                             while (i < lines.length) {
-                                let cmdLine = lines[i].trim();
+                                let cmdLine = lines[i] ? lines[i].trim() : '';
                                 let cmdLower = cmdLine.toLowerCase();
-
-                                // Ignore blank lines within a sound block to avoid shattering the block
+                
                                 if (cmdLower === '') {
                                     i++;
                                     continue;
                                 }
-
+                
                                 if (cmdLower === '[sound]' || cmdLower === '[loopsound]') {
                                     break;
                                 }
-
+                
                                 if (cmdLower === '[viewpoint]') {
                                     block.viewpoint = (lines[i+1] || '2').trim();
                                     i += 2;
@@ -456,22 +458,20 @@
                                         currentCurve.points.push({ x: px, y: py });
                                         i += 3;
                                     } else {
-                                        break; // Orphaned [pnt] tag forces block close
+                                        break;
                                     }
                                 } else {
-                                    // Unknown tag or random text; exit inner loop and treat as rawtext
                                     break;
                                 }
                             }
                             blocks.value.push(block);
                         } else {
-                            // Collect lines that are outside recognized sound block properties
-                            currentRawText.push(lineStr);
+                            if (hasProcessedABlock) {
+                                currentRawText.push(lineStr);
+                            }
                             i++;
                         }
                     }
-                    
-                    flushRawText();
                 };
 
                 const getVisualPoints = (points) => {
@@ -611,7 +611,8 @@
                         } else {
                             blockLines.push(block.volume);
                             
-                            if (block.trigger && block.conditions.length === 0) {
+                            // Always add the trigger if it exists, regardless of conditions
+                            if (block.trigger) {
                                 blockLines.push('[trigger]', block.trigger);
                             }
                         }
