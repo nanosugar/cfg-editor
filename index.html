@@ -247,8 +247,10 @@
                                     <div class="text-xs font-bold text-slate-500 mb-1">
                                         [volcurve] &rarr; <span class="text-blue-700">{{ curve.variable }}</span>
                                     </div>
-                                    <div v-if="block.conditions.length === 0" class="text-slate-400 italic text-[11px]">
-                                    A [volcurve] with a variable of -1 means a fade in for the loopsound.
+                                    
+                                    <!-- Only show this if the variable is specifically -1 -->
+                                    <div v-if="curve.variable === '-1'" class="text-slate-400 italic text-[11px] mb-2">
+                                        A [volcurve] with a variable of -1 means a fade in for the loopsound.
                                     </div>
                                     <svg class="bg-white border border-slate-300 rounded" width="300" height="120" viewBox="0 0 300 120">
                                         <line x1="0" y1="30" x2="300" y2="30" stroke="#cbd5e1" stroke-width="1" />
