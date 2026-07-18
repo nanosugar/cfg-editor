@@ -3,26 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OMSI Config Editor</title>
-    <!-- Tailwind CSS for quick styling -->
+    <title>OMSI Sound Config Editor</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Vue 3 for reactive state management -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
-<body class="bg-gray-100 text-gray-950 p-6">
+<body class="bg-slate-50 text-slate-900 p-6">
 
-    <div id="app" class="max-w-5xl mx-auto">
-        <header class="mb-6">
-            <h1 class="text-2xl font-bold">OMSI Config Editor</h1>
-            <p class="text-sm text-gray-600">Upload, reorder, and mass-edit configuration blocks.</p>
+    <div id="app" class="max-w-4xl mx-auto">
+        <header class="mb-6 flex justify-between items-center border-b border-slate-200 pb-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-slate-800">OMSI Sound Config Editor</h1>
+                <p class="text-sm text-slate-500">Upload, drag to reorder, edit, and export configurations.</p>
+            </div>
+            
+            <!-- Export Action -->
+            <button v-if="blocks.length > 0" @click="exportFile" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded shadow-sm text-sm transition">
+                Export File
+            </button>
         </header>
 
-        <!-- Main Workspace -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <input type="file" @change="handleFileUpload" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-            
-            <div class="mt-6">
-                <p class="text-gray-500 italic">Loaded blocks will appear here...</p>
+        <!-- Top Controls / File Upload -->
+        <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs mb-6 flex gap-4 items-center flex-wrap">
+            <div class="flex-1 min-w-[250px]">
+                <input type="file" @change="handleFileUpload" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+            </div>
+
+            <!-- Global Mass Edit Action -->
+            <div v-if="blocks.length > 0" class="flex items-center gap-2">
+                <input v-model="findText" type="text" placeholder="Find text..." class="border border-slate-300 rounded px-2 py-1 text-sm bg-white">
+                <input v-model="replaceText" type="text" placeholder="Replace with..." class="border border-slate-300 rounded px-2 py-1 text-sm bg-white">
+                <button @click="massReplace" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1 px-3 rounded transition">
+                    Mass Replace
+                </button>
+            </div>
+        </div>
+
+        <!-- Draggable Workspace List -->
+        <div 
+            class="space-y-3"
+            @dragover.prevent
+            @drop="handleDrop"
+        >
+            <div v-if="blocks.length === 0" class="text-center py-12 border-2 border-dashed border-slate-200 rounded-lg bg-white">
+                <p class="text-slate-400 italic">Select an OMSI sound configuration file above to begin.</p>
+            </div>
+
+            <!-- Block Cards -->
+            <div 
+                v-for="(block, index) in blocks" 
+                :key="block.id"
+                draggable="true"
+                @dragstart="handleDragStart(index)"
+                @dragenter="handleDragEnter(index)"
+                class="bg-white rounded-lg border shadow-xs p-4 flex gap-4 items-start transition duration-150 group"
+                :class="block.type === 'loopsound' ? 'border-l-4 border-l-emerald-500 border-slate-200' : 'border-l-4 border-l-blue-500 border-slate-200'"
+            >
+                <!-- Drag Handle Icon -->
+                <div class="text-slate-300 group-hover:text-slate-400 cursor-grab active:cursor-grabbing pt-2 select-none font-bold">
+                    ☰
+                </div>
+
+                <!-- Config Details -->
+                <div class="flex-1 space-y-2">
+                    <div class="flex justify-between items-center gap-4">
+                        <!-- Block Type Selector -->
+                        <select v-model="block.type" class="bg-slate-100 border border-slate-300 rounded px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-wider text-slate-700 focus:outline-none">
+                            <option value="sound">[sound]</option>
+                            <option value="loopsound">[loopsound]</option>
+                        </select>
+                        
+                        <!-- Actions -->
+                        <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button @click="duplicateBlock(index)" class="text-xs text-blue-600 hover:underline">Duplicate</button>
+                            <span class="text-slate-300">|</span>
+                            <button @click="deleteBlock(index)" class="text-xs text-rose-600 hover:underline">Delete</button>
+                        </div>
+                    </div>
+
+                    <!-- Internal block parameters -->
+                    <textarea 
+                        v-model="block.content" 
+                        rows="4"
+                        class="w-full font-mono text-sm bg-slate-50 border border-slate-200 rounded p-2 focus:bg-white focus:border-blue-400 focus:outline-none resize-y"
+                        placeholder="Paste or type configuration variables here..."
+                    ></textarea>
+                </div>
             </div>
         </div>
     </div>
@@ -33,6 +98,11 @@
         createApp({
             setup() {
                 const blocks = ref([]);
+                const findText = ref('');
+                const replaceText = ref('');
+                
+                // Track dragging state indices
+                let draggedIndex = null;
 
                 const handleFileUpload = (event) => {
                     const file = event.target.files[0];
@@ -40,16 +110,100 @@
 
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        const text = e.target.result;
-                        // Your parsing logic will go here
-                        console.log("File loaded successfully");
+                        const rawText = e.target.result;
+                        
+                        // Parse logic: Split blocks by lookahead matching [sound] or [loopsound]
+                        const blockRegex = /(?=\[(?:sound|loopsound)\])/i;
+                        const rawBlocks = rawText.split(blockRegex);
+                        
+                        blocks.value = rawBlocks
+                            .map((blockContent, idx) => {
+                                const trimmed = blockContent.trim();
+                                if (!trimmed) return null;
+                                
+                                const lines = trimmed.split('\n');
+                                const header = lines[0].toLowerCase();
+                                const body = lines.slice(1).join('\n');
+                                
+                                return {
+                                    id: `b-${idx}-${Date.now()}-${Math.random()}`,
+                                    type: header.includes('loopsound') ? 'loopsound' : 'sound',
+                                    content: body
+                                };
+                            })
+                            .filter(b => b !== null);
                     };
                     reader.readAsText(file);
                 };
 
+                // Native HTML5 Drag and Drop Event Handling
+                const handleDragStart = (index) => {
+                    draggedIndex = index;
+                };
+
+                const handleDragEnter = (index) => {
+                    if (draggedIndex === null || draggedIndex === index) return;
+                    
+                    // Reorder item array reactivity handles layout moving items safely
+                    const targetItem = blocks.value[draggedIndex];
+                    blocks.value.splice(draggedIndex, 1);
+                    blocks.value.splice(index, 0, targetItem);
+                    draggedIndex = index;
+                };
+
+                const handleDrop = () => {
+                    draggedIndex = null;
+                };
+
+                // Manipulations
+                const duplicateBlock = (index) => {
+                    const clone = JSON.parse(JSON.stringify(blocks.value[index]));
+                    clone.id = `b-clone-${Date.now()}-${Math.random()}`;
+                    blocks.value.splice(index + 1, 0, clone);
+                };
+
+                const deleteBlock = (index) => {
+                    blocks.value.splice(index, 1);
+                };
+
+                const massReplace = () => {
+                    if (!findText.value) return;
+                    blocks.value.forEach(block => {
+                        // Global replacement helper inside block textareas
+                        block.content = block.content.replaceAll(findText.value, replaceText.value);
+                    });
+                    alert(`Search and replace executed across all blocks.`);
+                };
+
+                // Output Re-assembly
+                const exportFile = () => {
+                    const outputText = blocks.value.map(block => {
+                        const header = block.type === 'loopsound' ? '[loopsound]' : '[sound]';
+                        return `${header}\n${block.content}`;
+                    }).join('\n\n');
+
+                    // Create file download stream inside browser frame
+                    const blob = new Blob([outputText], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'sound_edited.cfg';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                };
+
                 return {
                     blocks,
-                    handleFileUpload
+                    findText,
+                    replaceText,
+                    handleFileUpload,
+                    handleDragStart,
+                    handleDragEnter,
+                    handleDrop,
+                    duplicateBlock,
+                    deleteBlock,
+                    massReplace,
+                    exportFile
                 };
             }
         }).mount('#app');
