@@ -312,6 +312,16 @@
                 </div>
             </div>
         </div>
+
+        <button
+            v-if="blocks.length"
+            @click="toggleAllCollapsed"
+            class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl text-xl transition z-50"
+            :title="blocks.every(b => b.collapsed) ? 'Expand all' : 'Collapse all'">
+        
+            {{ blocks.every(b => b.collapsed) ? '⤢' : '⤡' }}
+        
+        </button>
     </div>
 
     <script>
@@ -523,6 +533,14 @@
                     curve.points.splice(index, 1);
                 };
 
+                const toggleAllCollapsed = () => {
+                    const shouldExpand = blocks.value.every(b => b.collapsed);
+                
+                    blocks.value.forEach(block => {
+                        block.collapsed = !shouldExpand;
+                    });
+                };
+
                 const massReplace = () => {
                     if (!findText.value) return;
                     blocks.value.forEach(block => {
@@ -627,6 +645,7 @@
                     removeCondition,
                     addCurvePoint,
                     removeCurvePoint,
+                    toggleAllCollapsed,
                     massReplace,
                     exportFile,
                     getVisualPoints,
