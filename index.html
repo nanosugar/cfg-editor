@@ -172,7 +172,9 @@
                                                 <option value="no">No</option>
                                                 <option value="yes">Yes</option>
                                             </select>
-                                            <span class="font-bold text-slate-500 w-32">If yes, sound will play only once when conditions are met.</span>
+                                            <div v-if="curve.variable === '-1'" class="text-slate-400 italic text-[11px] mb-2">
+                                                If yes, sound will play only once when conditions are met.
+                                            </div>
                                         </div>
                                     </div>
                                 </template>
