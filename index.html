@@ -107,7 +107,7 @@
                         </template>
 
                         <!-- LoopSound Fields Configuration -->
-                        <template v-slot:default v-else-if="block.type === 'loopsound'">
+                        <template v-else-if="block.type === 'loopsound'">
                             <div class="flex items-center gap-2">
                                 <span class="font-bold text-slate-400 w-24">Sample Rate:</span>
                                 <select v-model="block.sampleRate" class="border border-slate-300 rounded px-1.5 py-0.5 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
@@ -135,7 +135,7 @@
                         <span 
                             v-for="(tag, tIdx) in block.tags" 
                             :key="tIdx"
-                            class="px-2 py-0.5 rounded text-xs bg-slate-50 border border-slate-200 whitespace-nowrap font-bold text-blue-700 bg-blue-50/30 border-blue-100"
+                            class="px-2 py-0.5 rounded text-xs font-bold text-blue-700 bg-blue-50/30 border border-blue-100 whitespace-nowrap"
                         >
                             {{ tag }}
                         </span>
@@ -219,6 +219,8 @@
                             if (!trimmed) return null;
                             
                             const lines = trimmed.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                            if (lines.length === 0) return null;
+
                             const header = lines[0].toLowerCase();
                             const isLoop = header.includes('loopsound');
                             
@@ -227,14 +229,13 @@
                             let loopVariable = '';
                             let varValue = '';
                             let volume = '';
-                            let viewpoint = '2'; // Default to Inside (2) if not specified
+                            let viewpoint = '2'; 
                             let filteredRemaining = [];
 
-                            // Structural variables parsing alignment based on configuration profiles
                             let readIdx = 1;
                             if (isLoop) {
                                 filename = lines[1] || '';
-                                sampleRate = lines[2] || '';
+                                sampleRate = lines[2] || '44100';
                                 loopVariable = lines[3] || '';
                                 varValue = lines[4] || '';
                                 volume = lines[5] || '';
@@ -250,14 +251,15 @@
                             const curves = [];
                             let currentCurve = null;
 
-                            // Loop rest of file body to pull viewpoint and curves mapping properties out safely
                             for (let i = readIdx; i < lines.length; i++) {
                                 const line = lines[i];
+                                if (!line) continue;
+                                
                                 const lowerLine = line.toLowerCase();
                                 
                                 if (lowerLine === '[viewpoint]') {
                                     viewpoint = lines[i+1] || '2';
-                                    i++; // Skip values tracker index
+                                    i++; 
                                 } else if (lowerLine === '[volcurve]') {
                                     currentCurve = { variable: lines[i+1] || 'unknown', points: [] };
                                     curves.push(currentCurve);
@@ -292,7 +294,6 @@
                         .filter(b => b !== null);
                 };
 
-                // SVG coordinates calculation handlers supporting complete scale adjustments
                 const getVisualPoints = (points) => {
                     if (!points || points.length === 0) return [];
                     
@@ -305,11 +306,10 @@
                     
                     const minX = Math.min(...xValues);
                     const maxX = Math.max(...xValues);
-                    const minY = Math.min(...yValues, 0); // Scale from zero base floor
+                    const minY = Math.min(...yValues, 0); 
                     const maxY = Math.max(...yValues);
 
                     return points.map(p => {
-                        // Fit to exact visual box borders completely
                         const pctX = (maxX - minX === 0) ? 0.5 : (p.x - minX) / (maxX - minX);
                         const pctY = (maxY - minY === 0) ? 0.5 : (p.y - minY) / (maxY - minY);
 
@@ -386,17 +386,14 @@
                         const header = block.type === 'loopsound' ? '[loopsound]' : '[sound]';
                         let blockLines = [header, block.filename];
                         
-                        // Assemble base lines matching precise data corrections
                         if (block.type === 'loopsound') {
                             blockLines.push(block.sampleRate, block.loopVariable, block.varValue, block.volume);
                         } else {
                             blockLines.push(block.varValue, block.volume);
                         }
 
-                        // Re-inject viewpoint configurations into clean export array position strings
                         blockLines.push('[viewpoint]', block.viewpoint);
 
-                        // Re-assemble custom parsed curve objects explicitly
                         if (block.curves && block.curves.length > 0) {
                             block.curves.forEach(curve => {
                                 blockLines.push('[volcurve]', curve.variable);
@@ -406,7 +403,6 @@
                             });
                         }
 
-                        // Append secondary flags left over
                         if (block.rawRemaining && block.rawRemaining.length > 0) {
                             block.rawRemaining.forEach(l => {
                                 if (l.toLowerCase() !== '[viewpoint]' && l.toLowerCase() !== '[volcurve]' && l.toLowerCase() !== '[pnt]') {
