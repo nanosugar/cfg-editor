@@ -64,8 +64,19 @@
                 :class="block.type === 'loopsound' ? 'border-l-4 border-l-emerald-500 border-slate-200' : 'border-l-4 border-l-blue-500 border-slate-200'"
             >
                 <!-- Drag Handle Icon -->
-                <div class="text-slate-300 group-hover:text-slate-400 cursor-grab active:cursor-grabbing select-none font-bold px-1 pt-1">
-                    ☰
+                <div class="flex flex-col items-center gap-1">
+                
+                    <button
+                        @click="block.collapsed = !block.collapsed"
+                        class="text-slate-500 hover:text-slate-800 text-xs">
+                        {{ block.collapsed ? '▶' : '▼' }}
+                    </button>
+                
+                    <div
+                        class="text-slate-300 group-hover:text-slate-400 cursor-grab active:cursor-grabbing select-none font-bold">
+                        ☰
+                    </div>
+                
                 </div>
 
                 <!-- Block Type Identifier Tag -->
@@ -136,165 +147,165 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
     
-                        <!-- Interactive Base Editable Fields Stack -->
-                        <div class="text-xs text-slate-600 space-y-2 pl-2 border-l-2 border-slate-200 max-w-xl">
-                            
-                            <template v-if="block.type === 'sound'">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-slate-400 w-24">Volume:</span> 
-                                    <input v-model="block.volume" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
-                                </div>
-                            </template>
-    
-                            <template v-else-if="block.type === 'loopsound'">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-slate-400 w-24">Sample Rate:</span>
-                                    <select v-model="block.sampleRate" class="border border-slate-300 rounded px-1.5 py-0.5 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
-                                        <option value="44100">44100</option>
-                                        <option value="48000">48000</option>
-                                    </select>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-slate-400 w-24">Variable:</span> 
-                                    <input v-model="block.loopVariable" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-64 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-slate-400 w-24">Variable Value:</span> 
-                                    <input v-model="block.varValue" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-slate-400 w-24">Volume:</span> 
-                                    <input v-model="block.volume" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
-                                </div>
-    
-                                <div class="pt-2 mt-2 border-t border-dashed border-slate-200">
+                            <!-- Interactive Base Editable Fields Stack -->
+                            <div class="text-xs text-slate-600 space-y-2 pl-2 border-l-2 border-slate-200 max-w-xl">
+                                
+                                <template v-if="block.type === 'sound'">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-bold text-slate-500 w-32">Add a [noloop] tag?</span>
-                                        <select v-model="block.noloop" class="border border-slate-300 rounded px-1.5 py-0.5 bg-white text-slate-800">
-                                            <option value="no">No</option>
-                                            <option value="yes">Yes</option>
+                                        <span class="font-bold text-slate-400 w-24">Volume:</span> 
+                                        <input v-model="block.volume" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                                    </div>
+                                </template>
+        
+                                <template v-else-if="block.type === 'loopsound'">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-slate-400 w-24">Sample Rate:</span>
+                                        <select v-model="block.sampleRate" class="border border-slate-300 rounded px-1.5 py-0.5 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                                            <option value="44100">44100</option>
+                                            <option value="48000">48000</option>
                                         </select>
                                     </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-slate-400 w-24">Variable:</span> 
+                                        <input v-model="block.loopVariable" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-64 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-slate-400 w-24">Variable Value:</span> 
+                                        <input v-model="block.varValue" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-slate-400 w-24">Volume:</span> 
+                                        <input v-model="block.volume" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                                    </div>
+        
+                                    <div class="pt-2 mt-2 border-t border-dashed border-slate-200">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-slate-500 w-32">Add a [noloop] tag?</span>
+                                            <select v-model="block.noloop" class="border border-slate-300 rounded px-1.5 py-0.5 bg-white text-slate-800">
+                                                <option value="no">No</option>
+                                                <option value="yes">Yes</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+        
+                            <!-- Mutually Exclusive Trigger Block for [sound] -->
+                            <template v-if="block.type === 'sound'">
+                                <div class="text-xs space-y-2 pl-2 border-l-2 border-amber-300 max-w-2xl bg-amber-50/40 p-2 rounded mt-4 transition-opacity" :class="{'opacity-50': block.conditions.length > 0}">
+                                    <div class="font-bold text-slate-600 flex items-center justify-between">
+                                        <span>[trigger]</span>
+                                        <button v-if="!block.trigger" @click="block.trigger = 'new_trigger'" :disabled="block.conditions.length > 0" class="text-[10px] bg-slate-200 hover:bg-slate-300 px-2 py-0.5 rounded text-slate-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                            + Add Trigger
+                                        </button>
+                                    </div>
+                                    
+                                    <div v-if="!block.trigger" class="text-slate-400 italic text-[11px]">
+                                        No trigger attached.
+                                    </div>
+                                    <div v-else class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded p-1.5 shadow-2xs relative">
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-slate-400 font-semibold">Trigger Event:</span>
+                                            <input v-model="block.trigger" type="text" :disabled="block.conditions.length > 0" class="border border-slate-300 rounded px-1.5 py-0.5 w-64 font-mono bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 focus:outline-none focus:border-blue-400">
+                                        </div>
+                                        <button @click="block.trigger = ''" class="text-rose-500 font-bold hover:text-rose-700 pl-1 text-[11px]">×</button>
+                                    </div>
+                                    <div v-if="block.conditions.length > 0" class="text-rose-500 font-semibold text-[10px] mt-1">
+                                        Disabled: A sound cannot have both a trigger and conditions.
+                                    </div>
                                 </div>
                             </template>
-                        </div>
-    
-                        <!-- Mutually Exclusive Trigger Block for [sound] -->
-                        <template v-if="block.type === 'sound'">
-                            <div class="text-xs space-y-2 pl-2 border-l-2 border-amber-300 max-w-2xl bg-amber-50/40 p-2 rounded mt-4 transition-opacity" :class="{'opacity-50': block.conditions.length > 0}">
+        
+                            <!-- Vertical Stack for Multiple conditionSingle Config Entries -->
+                            <div class="text-xs space-y-2 pl-2 border-l-2 border-amber-300 max-w-2xl bg-amber-50/40 p-2 rounded mt-4 transition-opacity" :class="{'opacity-50': block.type === 'sound' && !!block.trigger}">
                                 <div class="font-bold text-slate-600 flex items-center justify-between">
-                                    <span>[trigger]</span>
-                                    <button v-if="!block.trigger" @click="block.trigger = 'new_trigger'" :disabled="block.conditions.length > 0" class="text-[10px] bg-slate-200 hover:bg-slate-300 px-2 py-0.5 rounded text-slate-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                                        + Add Trigger
+                                    <span>[conditionSingle]</span>
+                                    <button @click="addCondition(block)" :disabled="block.type === 'sound' && !!block.trigger" class="text-[10px] bg-slate-200 hover:bg-slate-300 px-2 py-0.5 rounded text-slate-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                        + Add Condition
                                     </button>
                                 </div>
-                                
-                                <div v-if="!block.trigger" class="text-slate-400 italic text-[11px]">
-                                    No trigger attached.
+                                <div v-if="block.conditions.length === 0" class="text-slate-400 italic text-[11px]">
+                                    No conditional requirements attached.
                                 </div>
-                                <div v-else class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded p-1.5 shadow-2xs relative">
+                                <div v-for="(cond, cIdx) in block.conditions" :key="cIdx" class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded p-1.5 shadow-2xs relative">
                                     <div class="flex items-center gap-1">
-                                        <span class="text-slate-400 font-semibold">Trigger Event:</span>
-                                        <input v-model="block.trigger" type="text" :disabled="block.conditions.length > 0" class="border border-slate-300 rounded px-1.5 py-0.5 w-64 font-mono bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 focus:outline-none focus:border-blue-400">
+                                        <span class="text-slate-400 font-semibold">Variable Name:</span>
+                                        <input v-model="cond.varName" type="text" :disabled="block.type === 'sound' && !!block.trigger" class="border border-slate-300 rounded px-1.5 py-0.5 w-40 font-mono bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-500">
                                     </div>
-                                    <button @click="block.trigger = ''" class="text-rose-500 font-bold hover:text-rose-700 pl-1 text-[11px]">×</button>
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-slate-400 font-semibold">Value:</span>
+                                        <input v-model="cond.varVal" type="text" :disabled="block.type === 'sound' && !!block.trigger" class="border border-slate-300 rounded px-1.5 py-0.5 w-20 font-mono bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-500">
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-slate-400 font-semibold">Condition:</span>
+                                        <select v-model="cond.conditionType" :disabled="block.type === 'sound' && !!block.trigger" class="border border-slate-300 rounded px-1 py-0.5 font-sans bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-500">
+                                            <option value="1">1 : = Equal to above value</option>
+                                            <option value="2">2 : &lt; Less than above value</option>
+                                            <option value="3">3 : &gt; Greater than above value</option>
+                                            <option value="4">4 : &lt;= Less than or equal to above value</option>
+                                            <option value="5">5 : &gt;= Greater than or equal to above value</option>
+                                        </select>
+                                    </div>
+                                    <button @click="removeCondition(block, cIdx)" class="text-rose-500 font-bold hover:text-rose-700 pl-1 text-[11px]">×</button>
                                 </div>
-                                <div v-if="block.conditions.length > 0" class="text-rose-500 font-semibold text-[10px] mt-1">
+                                <div v-if="block.type === 'sound' && !!block.trigger" class="text-rose-500 font-semibold text-[10px] mt-1">
                                     Disabled: A sound cannot have both a trigger and conditions.
                                 </div>
                             </div>
-                        </template>
-    
-                        <!-- Vertical Stack for Multiple conditionSingle Config Entries -->
-                        <div class="text-xs space-y-2 pl-2 border-l-2 border-amber-300 max-w-2xl bg-amber-50/40 p-2 rounded mt-4 transition-opacity" :class="{'opacity-50': block.type === 'sound' && !!block.trigger}">
-                            <div class="font-bold text-slate-600 flex items-center justify-between">
-                                <span>[conditionSingle]</span>
-                                <button @click="addCondition(block)" :disabled="block.type === 'sound' && !!block.trigger" class="text-[10px] bg-slate-200 hover:bg-slate-300 px-2 py-0.5 rounded text-slate-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                                    + Add Condition
-                                </button>
+        
+                            <!-- Horizontal Secondary Extra Tags -->
+                            <div v-if="block.tags.length > 0" class="flex flex-wrap gap-1.5 items-center pt-1">
+                                <span 
+                                    v-for="(tag, tIdx) in block.tags" 
+                                    :key="tIdx"
+                                    class="px-2 py-0.5 rounded text-xs font-bold text-blue-700 bg-blue-50/30 border border-blue-100 whitespace-nowrap"
+                                >
+                                    {{ tag }}
+                                </span>
                             </div>
-                            <div v-if="block.conditions.length === 0" class="text-slate-400 italic text-[11px]">
-                                No conditional requirements attached.
-                            </div>
-                            <div v-for="(cond, cIdx) in block.conditions" :key="cIdx" class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded p-1.5 shadow-2xs relative">
-                                <div class="flex items-center gap-1">
-                                    <span class="text-slate-400 font-semibold">Variable Name:</span>
-                                    <input v-model="cond.varName" type="text" :disabled="block.type === 'sound' && !!block.trigger" class="border border-slate-300 rounded px-1.5 py-0.5 w-40 font-mono bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-500">
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <span class="text-slate-400 font-semibold">Value:</span>
-                                    <input v-model="cond.varVal" type="text" :disabled="block.type === 'sound' && !!block.trigger" class="border border-slate-300 rounded px-1.5 py-0.5 w-20 font-mono bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-500">
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <span class="text-slate-400 font-semibold">Condition:</span>
-                                    <select v-model="cond.conditionType" :disabled="block.type === 'sound' && !!block.trigger" class="border border-slate-300 rounded px-1 py-0.5 font-sans bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-500">
-                                        <option value="1">1 : = Equal to above value</option>
-                                        <option value="2">2 : &lt; Less than above value</option>
-                                        <option value="3">3 : &gt; Greater than above value</option>
-                                        <option value="4">4 : &lt;= Less than or equal to above value</option>
-                                        <option value="5">5 : &gt;= Greater than or equal to above value</option>
-                                    </select>
-                                </div>
-                                <button @click="removeCondition(block, cIdx)" class="text-rose-500 font-bold hover:text-rose-700 pl-1 text-[11px]">×</button>
-                            </div>
-                            <div v-if="block.type === 'sound' && !!block.trigger" class="text-rose-500 font-semibold text-[10px] mt-1">
-                                Disabled: A sound cannot have both a trigger and conditions.
-                            </div>
-                        </div>
-    
-                        <!-- Horizontal Secondary Extra Tags -->
-                        <div v-if="block.tags.length > 0" class="flex flex-wrap gap-1.5 items-center pt-1">
-                            <span 
-                                v-for="(tag, tIdx) in block.tags" 
-                                :key="tIdx"
-                                class="px-2 py-0.5 rounded text-xs font-bold text-blue-700 bg-blue-50/30 border border-blue-100 whitespace-nowrap"
-                            >
-                                {{ tag }}
-                            </span>
-                        </div>
-    
-                        <!-- Fully Scaled Volcurve Viewport Area -->
-                        <div v-if="block.curves && block.curves.length > 0" class="pt-1 space-y-4">
-                            <div v-for="(curve, cIdx) in block.curves" :key="cIdx" class="bg-slate-50 p-3 rounded border border-slate-200 inline-block min-w-[320px]">
-                                <div class="text-xs font-bold text-slate-500 mb-1">
-                                    [volcurve] &rarr; <span class="text-blue-700">{{ curve.variable }}</span>
-                                </div>
-                                <p class="text-[10px] text-slate-400 italic mb-2 font-normal">A [volcurve] with a variable of -1 means a fade in for the loopsound.</p>
-                                <svg class="bg-white border border-slate-300 rounded" width="300" height="120" viewBox="0 0 300 120">
-                                    <line x1="0" y1="30" x2="300" y2="30" stroke="#cbd5e1" stroke-width="1" />
-                                    <line x1="0" y1="60" x2="300" y2="60" stroke="#cbd5e1" stroke-width="1" />
-                                    <line x1="0" y1="90" x2="300" y2="90" stroke="#cbd5e1" stroke-width="1" />
-                                    
-                                    <line x1="75" y1="0" x2="75" y2="120" stroke="#f1f5f9" stroke-width="1" />
-                                    <line x1="150" y1="0" x2="150" y2="120" stroke="#cbd5e1" stroke-width="1" />
-                                    <line x1="225" y1="0" x2="225" y2="120" stroke="#f1f5f9" stroke-width="1" />
-    
-                                    <path 
-                                        :d="getSvgPath(curve.points)" 
-                                        fill="none" 
-                                        stroke="#2563eb" 
-                                        stroke-width="2" 
-                                        stroke-linecap="round" 
-                                        stroke-linejoin="round"
-                                    />
-                                    
-                                    <circle 
-                                        v-for="(pnt, pIdx) in getVisualPoints(curve.points)" 
-                                        :key="pIdx"
-                                        :cx="pnt.x" 
-                                        :cy="pnt.y" 
-                                        r="4" 
-                                        fill="#1d4ed8"
-                                        stroke="#ffffff"
-                                        stroke-width="1.5"
-                                    />
-                                </svg>
-                                <div class="flex gap-2 mt-1.5 overflow-x-auto text-[10px] text-slate-500">
-                                    <span v-for="(p, pIdx) in curve.points" :key="pIdx" class="bg-slate-200/60 px-1.5 py-0.5 rounded whitespace-nowrap">
-                                        X: <strong>{{ p.x }}</strong> Y: <strong>{{ p.y }}</strong>
-                                    </span>
+        
+                            <!-- Fully Scaled Volcurve Viewport Area -->
+                            <div v-if="block.curves && block.curves.length > 0" class="pt-1 space-y-4">
+                                <div v-for="(curve, cIdx) in block.curves" :key="cIdx" class="bg-slate-50 p-3 rounded border border-slate-200 inline-block min-w-[320px]">
+                                    <div class="text-xs font-bold text-slate-500 mb-1">
+                                        [volcurve] &rarr; <span class="text-blue-700">{{ curve.variable }}</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 italic mb-2 font-normal">A [volcurve] with a variable of -1 means a fade in for the loopsound.</p>
+                                    <svg class="bg-white border border-slate-300 rounded" width="300" height="120" viewBox="0 0 300 120">
+                                        <line x1="0" y1="30" x2="300" y2="30" stroke="#cbd5e1" stroke-width="1" />
+                                        <line x1="0" y1="60" x2="300" y2="60" stroke="#cbd5e1" stroke-width="1" />
+                                        <line x1="0" y1="90" x2="300" y2="90" stroke="#cbd5e1" stroke-width="1" />
+                                        
+                                        <line x1="75" y1="0" x2="75" y2="120" stroke="#f1f5f9" stroke-width="1" />
+                                        <line x1="150" y1="0" x2="150" y2="120" stroke="#cbd5e1" stroke-width="1" />
+                                        <line x1="225" y1="0" x2="225" y2="120" stroke="#f1f5f9" stroke-width="1" />
+        
+                                        <path 
+                                            :d="getSvgPath(curve.points)" 
+                                            fill="none" 
+                                            stroke="#2563eb" 
+                                            stroke-width="2" 
+                                            stroke-linecap="round" 
+                                            stroke-linejoin="round"
+                                        />
+                                        
+                                        <circle 
+                                            v-for="(pnt, pIdx) in getVisualPoints(curve.points)" 
+                                            :key="pIdx"
+                                            :cx="pnt.x" 
+                                            :cy="pnt.y" 
+                                            r="4" 
+                                            fill="#1d4ed8"
+                                            stroke="#ffffff"
+                                            stroke-width="1.5"
+                                        />
+                                    </svg>
+                                    <div class="flex gap-2 mt-1.5 overflow-x-auto text-[10px] text-slate-500">
+                                        <span v-for="(p, pIdx) in curve.points" :key="pIdx" class="bg-slate-200/60 px-1.5 py-0.5 rounded whitespace-nowrap">
+                                            X: <strong>{{ p.x }}</strong> Y: <strong>{{ p.y }}</strong>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
