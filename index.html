@@ -88,12 +88,10 @@
 
                     <!-- SOUND / LOOPSOUND TEMPLATE -->
                     <template v-else>
-                        <!-- Header Area: Filename, Viewpoint, and 3D -->
-                        <div class="flex gap-6 items-start flex-wrap w-full">
-                            
-                            <!-- Left Stack: Filename & Viewpoint -->
-                            <div class="flex flex-col gap-2 flex-1 min-w-[300px]">
-                                <div class="bg-slate-50 px-2 py-1 rounded border w-full flex">
+                        <div class="flex flex-col gap-4 w-full">
+                            <!-- Top Row: Filename & Viewpoint -->
+                            <div class="flex gap-6 items-start flex-wrap w-full">
+                                <div class="bg-slate-50 px-2 py-1 rounded border flex-1 min-w-[300px]">
                                     <input 
                                         v-model="block.filename" 
                                         class="font-bold bg-transparent outline-none w-full placeholder:text-slate-400 placeholder:italic placeholder:font-normal" 
@@ -110,9 +108,9 @@
                                     </select>
                                 </div>
                             </div>
-
-                            <!-- Right Stack: 3D Spatial Properties -->
-                            <div v-if="!block.collapsed" class="flex flex-col gap-1 text-xs bg-slate-100 border border-slate-200 rounded p-2">
+                    
+                            <!-- Bottom Row: 3D Spatial Properties (Below Filename) -->
+                            <div v-if="!block.collapsed" class="flex flex-col gap-1 text-xs bg-slate-100 border border-slate-200 rounded p-2 w-fit">
                                 <div class="font-bold text-slate-500 uppercase tracking-tight border-b border-slate-200 pb-0.5 mb-1 flex items-center gap-2">
                                     <span>[3d]</span>
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round">
@@ -122,14 +120,15 @@
                                         <circle cx="12" cy="12" r="1.5" fill="#334155" stroke="none"/>
                                     </svg>
                                 </div>
-                            <div class="flex flex-col mt-1">
-                                <label class="text-slate-400 font-bold mb-1">X / Y / Z / Fade:</label>
-                                <textarea 
-                                    v-model="block.spatial3d" 
-                                    placeholder="0 0 0 0" 
-                                    rows="4"
-                                    class="border border-slate-300 rounded px-2 py-1 w-48 bg-white text-slate-800 font-mono tracking-widest resize-none whitespace-pre">
-                                </textarea>
+                                <div class="flex flex-col mt-1">
+                                    <label class="text-slate-400 font-bold mb-1">X / Y / Z / Fade:</label>
+                                    <textarea 
+                                        v-model="block.spatial3d" 
+                                        placeholder="0 0 0 0" 
+                                        rows="4"
+                                        class="border border-slate-300 rounded px-2 py-1 w-48 bg-white text-slate-800 font-mono tracking-widest resize-none whitespace-pre">
+                                    </textarea>
+                                </div>
                             </div>
                         </div>
                         
