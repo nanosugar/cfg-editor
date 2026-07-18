@@ -122,9 +122,14 @@
                                         <circle cx="12" cy="12" r="1.5" fill="#334155" stroke="none"/>
                                     </svg>
                                 </div>
-                                <div class="mt-1">
-                                    <span class="text-slate-400 font-bold whitespace-nowrap">X / Y / Z / Fade:</span>
-                                    <input v-model="block.spatial3d" type="text" placeholder="0 0 0 0" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 font-mono tracking-widest text-center">
+                                <div class="flex flex-col mt-1">
+                                    <label class="text-slate-400 font-bold mb-1">X / Y / Z / Fade:</label>
+                                    <textarea 
+                                        v-model="block.spatial3d" 
+                                        placeholder="0 0 0 0" 
+                                        rows="4"
+                                        class="border border-slate-300 rounded px-2 py-1 w-48 bg-white text-slate-800 font-mono tracking-widest text-center resize-y">
+                                    </textarea>
                                 </div>
                             </div>
                         </div>
