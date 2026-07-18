@@ -396,48 +396,71 @@
                             let currentCurve = null;
                 
                             while (j < lines.length) {
-                                let rawLine = lines[j] || '';
-                                let cmdLine = rawLine.trim();
-                                let cmdLower = cmdLine.toLowerCase();
-                
-                                if (cmdLower === '[sound]' || cmdLower === '[loopsound]') break;
-                
-                                if (cmdLine === '' || cmdLine.startsWith('//') || cmdLine.startsWith(';')) {
-                                    j++;
-                                    continue;
-                                }
-                
-                                if (cmdLower === '[viewpoint]') {
-                                    block.viewpoint = (lines[j+1] || '2').trim();
-                                    j += 2;
-                                } else if (cmdLower === '[3d]') {
-                                    block.spatial3d = `${(lines[j+1]||'0').trim()} ${(lines[j+2]||'0').trim()} ${(lines[j+3]||'0').trim()} ${(lines[j+4]||'0').trim()}`;
-                                    j += 5;
-                                } else if (cmdLower === '[trigger]') {
-                                    block.trigger = (lines[j+1] || '').trim();
-                                    j += 2;
-                                } else if (cmdLower === '[noloop]') {
-                                    block.noloop = 'yes';
-                                    j += 1;
-                                } else if (cmdLower === '[conditionsingle]') {
-                                    block.conditions.push({
-                                        varName: (lines[j+1] || '').trim(),
-                                        varVal: (lines[j+2] || '').trim(),
-                                        conditionType: (lines[j+3] || '1').trim()
-                                    });
-                                    j += 4;
-                                } else if (cmdLower === '[volcurve]') {
-                                    currentCurve = { variable: (lines[j+1] || 'unknown').trim(), points: [] };
-                                    block.curves.push(currentCurve);
-                                    j += 2;
-                                } else if (cmdLower === '[pnt]') {
-                                    if (currentCurve) {
-                                        currentCurve.points.push({ x: parseFloat((lines[j+1] || '0').trim()), y: parseFloat((lines[j+2] || '0').trim()) });
-                                        j += 3;
-                                    } else { j++; }
-                                } else {
-                                    j++;
-                                }
+                                let currentMode = null; // What are we currently parsing?
+                                
+                                    while (j < lines.length) {
+                                        let rawLine = lines[j] || '';
+                                        let cmdLine = rawLine.trim();
+                                        let cmdLower = cmdLine.toLowerCase();
+                                
+                                        // 1. If we hit another block header, we are definitely done.
+                                        if (cmdLower === '[sound]' || cmdLower === '[loopsound]') break;
+                                
+                                        // 2. Ignore comments
+                                        if (cmdLine === '' || cmdLine.startsWith('//') || cmdLine.startsWith(';')) {
+                                            j++;
+                                            continue;
+                                        }
+                                
+                                        // 3. Detect new command headers
+                                        if (cmdLower === '[viewpoint]') { currentMode = 'viewpoint'; j++; continue; }
+                                        if (cmdLower === '[3d]') { currentMode = '3d'; j++; continue; }
+                                        if (cmdLower === '[trigger]') { currentMode = 'trigger'; j++; continue; }
+                                        if (cmdLower === '[noloop]') { block.noloop = 'yes'; currentMode = null; j++; continue; }
+                                        if (cmdLower === '[conditionsingle]') { currentMode = 'condition'; j++; continue; }
+                                        if (cmdLower === '[volcurve]') { 
+                                            currentCurve = { variable: '', points: [] }; 
+                                            block.curves.push(currentCurve);
+                                            currentMode = 'volcurve_var'; 
+                                            j++; 
+                                            continue; 
+                                        }
+                                        if (cmdLower === '[pnt]') { currentMode = 'pnt_x'; j++; continue; }
+                                
+                                        // 4. Consume data based on the current mode
+                                        if (currentMode) {
+                                            if (currentMode === 'viewpoint') { block.viewpoint = cmdLine; currentMode = null; }
+                                            else if (currentMode === '3d') {
+                                                // This expects 4 lines of numbers, but we can consume them one by one
+                                                let parts = block.spatial3d.split('\n');
+                                                if (parts.length < 4) {
+                                                    parts[parts.length === 1 && parts[0] === '0 0 0 0' ? 0 : parts.length] = cmdLine;
+                                                    block.spatial3d = parts.join('\n');
+                                                    if (parts.length === 4) currentMode = null;
+                                                }
+                                            }
+                                            else if (currentMode === 'trigger') { block.trigger = cmdLine; currentMode = null; }
+                                            else if (currentMode === 'condition') {
+                                                // Logic to fill condition fields sequentially
+                                                if (!block.conditions.length || block.conditions[block.conditions.length-1].conditionType) {
+                                                    block.conditions.push({ varName: cmdLine, varVal: '', conditionType: '' });
+                                                } else {
+                                                    let c = block.conditions[block.conditions.length-1];
+                                                    if (!c.varVal) c.varVal = cmdLine;
+                                                    else if (!c.conditionType) { c.conditionType = cmdLine; currentMode = null; }
+                                                }
+                                            }
+                                            else if (currentMode === 'volcurve_var') { currentCurve.variable = cmdLine; currentMode = null; }
+                                            else if (currentMode === 'pnt_x') { currentCurve.tempX = parseFloat(cmdLine); currentMode = 'pnt_y'; }
+                                            else if (currentMode === 'pnt_y') { 
+                                                currentCurve.points.push({ x: currentCurve.tempX, y: parseFloat(cmdLine) }); 
+                                                currentMode = null; 
+                                            }
+                                        }
+                                
+                                        // If it's not a header and not data for a command, just skip the line
+                                        j++;
+                                    }
                             }
                             blocks.value.push(block);
                             i = j; // Update outer loop index to where property scanner stopped
