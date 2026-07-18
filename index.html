@@ -44,15 +44,7 @@
         </div>
 
         <!-- Left-Justified Draggable Workspace -->
-        <div 
-            class="space-y-3 w-full text-left"
-            @dragover.prevent
-            @drop="handleDrop"
-        >
-            <div v-if="blocks.length === 0" class="py-12 border-2 border-dashed border-slate-200 rounded-lg bg-white text-center">
-                <p class="text-slate-400 italic">Select or drop an OMSI sound configuration file above to begin.</p>
-            </div>
-
+        <div class="space-y-3 w-full text-left" @dragover.prevent @drop="handleDrop">
             <!-- Block Cards -->
             <div 
                 v-for="(block, index) in blocks" 
@@ -63,43 +55,20 @@
                 class="bg-white rounded border shadow-xs p-4 flex gap-4 items-start transition duration-150 group text-left w-full"
                 :class="block.type === 'loopsound' ? 'border-l-4 border-l-emerald-500 border-slate-200' : 'border-l-4 border-l-blue-500 border-slate-200'"
             >
-                <!-- Drag Handle Icon -->
+                <!-- Drag Handle -->
                 <div class="flex flex-col items-center gap-1">
-                
-                    <button
-                        @click="block.collapsed = !block.collapsed"
-                        class="text-slate-500 hover:text-slate-800 text-xs">
+                    <button @click="block.collapsed = !block.collapsed" class="text-slate-500 hover:text-slate-800 text-xs">
                         {{ block.collapsed ? '▶' : '▼' }}
                     </button>
-                
-                    <div
-                        class="text-slate-300 group-hover:text-slate-400 cursor-grab active:cursor-grabbing select-none font-bold">
-                        ☰
-                    </div>
-                
+                    <div class="text-slate-300 group-hover:text-slate-400 cursor-grab active:cursor-grabbing select-none font-bold">☰</div>
                 </div>
 
-                <!-- Block Type Identifier Tag -->
-                <div class="font-mono text-xs font-bold uppercase tracking-wider px-2 py-1 rounded bg-slate-100 min-w-[95px] text-center border border-slate-200 mt-0.5">
-                    [{{ block.type }}]
-                </div>
-
-                <!-- Structured Properties Layout -->
                 <div class="flex-1 font-mono text-sm space-y-4 min-w-0">
-
-                    <!-- Always-visible header -->
-                    <div class="flex items-start gap-3 flex-wrap">
-                    
-                        <div class="bg-slate-50 px-2 py-1 rounded border mt-1">
-                            <input
-                                v-model="block.filename"
-                                class="font-bold bg-transparent outline-none min-w-[250px]"
-                                placeholder="No File Defined">
-                        </div>
-                    
+                    <div class="bg-slate-50 px-2 py-1 rounded border mt-1 w-fit">
+                        <input v-model="block.filename" class="font-bold bg-transparent outline-none min-w-[250px]" placeholder="No File Defined">
                     </div>
                     
-                    <div v-if="!block.collapsed">
+                    <div v-if="!block.collapsed" class="space-y-4">
                             
                             <!-- Viewpoint Configuration Row -->
                             <div class="flex items-center gap-2 text-xs bg-slate-100 border border-slate-200 rounded px-2 py-1 mt-1">
