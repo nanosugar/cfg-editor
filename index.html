@@ -13,7 +13,7 @@
         <header class="mb-6 flex justify-between items-center border-b border-slate-200 pb-4">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-slate-800">OMSI Sound Config Editor</h1>
-                <p class="text-sm text-slate-500">Fully interactive block variables, viewpoint selectors, and dynamic grid charts.</p>
+                <p class="text-sm text-slate-500">Fully interactive block variables, viewpoint selectors, 3D parameters, conditions, and dynamic grid charts.</p>
             </div>
             
             <button v-if="blocks.length > 0" @click="exportFile" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded shadow-sm text-sm transition">
@@ -74,39 +74,62 @@
                 </div>
 
                 <!-- Structured Properties Layout -->
-                <div class="flex-1 font-mono text-sm space-y-3 min-w-0">
-                    <!-- Filename Header & Viewpoint Selector Inline -->
-                    <div class="flex items-center gap-6 flex-wrap">
-                        <div class="text-slate-900 font-bold break-all bg-slate-50 px-2 py-1 rounded border border-slate-150">
+                <div class="flex-1 font-mono text-sm space-y-4 min-w-0">
+                    
+                    <!-- Top Line Layout: Filename Header, Viewpoint Selector, and 3D Parameters Side-by-Side -->
+                    <div class="flex items-start gap-6 flex-wrap">
+                        <div class="text-slate-900 font-bold break-all bg-slate-50 px-2 py-1 rounded border border-slate-150 mt-1">
                             🔊 {{ block.filename || 'No File Defined' }}
                         </div>
                         
-                        <!-- Dynamic Viewpoint Row Integration -->
-                        <div class="flex items-center gap-2 text-xs bg-slate-100 border border-slate-200 rounded px-2 py-1">
+                        <!-- Viewpoint Configuration Row -->
+                        <div class="flex items-center gap-2 text-xs bg-slate-100 border border-slate-200 rounded px-2 py-1 mt-1">
                             <span class="font-bold text-slate-500 uppercase tracking-tight">[viewpoint]</span>
                             <select v-model="block.viewpoint" class="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-slate-700 focus:outline-none font-sans font-medium">
-                                <option value="2">Inside</option>
-                                <option value="1">Outside</option>
-                                <option value="5">Outside + AI</option>
+                                <option value="2">Inside (2)</option>
+                                <option value="1">Outside (1)</option>
+                                <option value="5">Outside + AI (5)</option>
                             </select>
+                        </div>
+
+                        <!-- 3D Spatial Properties Row -->
+                        <div class="flex flex-col gap-1 text-xs bg-slate-100 border border-slate-200 rounded p-2">
+                            <div class="font-bold text-slate-500 uppercase tracking-tight border-b border-slate-200 pb-0.5 mb-1 flex items-center justify-between">
+                                <span>[3d]</span>
+                                <input type="checkbox" v-model="block.has3d" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                            </div>
+                            <div class="flex gap-2 flex-wrap" :class="{ 'opacity-40 pointer-events-none': !block.has3d }">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-slate-400 font-bold">X:</span>
+                                    <input v-model="block.spatial3d.x" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-14 bg-white text-slate-800">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-slate-400 font-bold">Y:</span>
+                                    <input v-model="block.spatial3d.y" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-14 bg-white text-slate-800">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-slate-400 font-bold">Z:</span>
+                                    <input v-model="block.spatial3d.z" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-14 bg-white text-slate-800">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-slate-400 font-bold">Fade [m]:</span>
+                                    <input v-model="block.spatial3d.fade" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-16 bg-white text-slate-800">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Interactive Editable Properties Stack -->
+                    <!-- Interactive Base Editable Fields Stack -->
                     <div class="text-xs text-slate-600 space-y-2 pl-2 border-l-2 border-slate-200 max-w-xl">
-                        <!-- Sound Fields Configuration -->
+                        <!-- Sound Fields Configuration Profile -->
                         <template v-if="block.type === 'sound'">
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-slate-400 w-24">Variable Value:</span> 
-                                <input v-model="block.varValue" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
-                            </div>
                             <div class="flex items-center gap-2">
                                 <span class="font-bold text-slate-400 w-24">Volume:</span> 
                                 <input v-model="block.volume" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
                             </div>
                         </template>
 
-                        <!-- LoopSound Fields Configuration -->
+                        <!-- LoopSound Fields Configuration Profile -->
                         <template v-else-if="block.type === 'loopsound'">
                             <div class="flex items-center gap-2">
                                 <span class="font-bold text-slate-400 w-24">Sample Rate:</span>
@@ -128,9 +151,51 @@
                                 <input v-model="block.volume" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
                             </div>
                         </template>
+
+                        <!-- Trigger Fields Alignment Layout Block -->
+                        <div class="pt-1 border-t border-dashed border-slate-200 mt-2">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-500 w-24">[trigger]:</span> 
+                                <input v-model="block.trigger" type="text" placeholder="None" class="border border-slate-300 rounded px-2 py-0.5 w-64 bg-white text-slate-800 font-mono focus:outline-none focus:border-blue-400">
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Horizontal Secondary Functional Tags -->
+                    <!-- Vertical Stack for Multiple conditionSingle Config Entries -->
+                    <div class="text-xs space-y-2 pl-2 border-l-2 border-amber-300 max-w-2xl bg-amber-50/40 p-2 rounded">
+                        <div class="font-bold text-slate-600 flex items-center justify-between">
+                            <span>[conditionSingle] Stack</span>
+                            <button @click="addCondition(block)" class="text-[10px] bg-slate-200 hover:bg-slate-300 px-2 py-0.5 rounded text-slate-700 transition">
+                                + Add Condition
+                            </button>
+                        </div>
+                        <div v-if="block.conditions.length === 0" class="text-slate-400 italic text-[11px]">
+                            No conditional requirements attached.
+                        </div>
+                        <div v-for="(cond, cIdx) in block.conditions" :key="cIdx" class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded p-1.5 shadow-2xs relative">
+                            <div class="flex items-center gap-1">
+                                <span class="text-slate-400 font-semibold">Variable Name:</span>
+                                <input v-model="cond.varName" type="text" class="border border-slate-300 rounded px-1.5 py-0.5 w-40 font-mono bg-white text-slate-800">
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-slate-400 font-semibold">Value:</span>
+                                <input v-model="cond.varVal" type="text" class="border border-slate-300 rounded px-1.5 py-0.5 w-20 font-mono bg-white text-slate-800">
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-slate-400 font-semibold">Condition:</span>
+                                <select v-model="cond.conditionType" class="border border-slate-300 rounded px-1 py-0.5 font-sans bg-white text-slate-800">
+                                    <option value="1">1 : = Equal to above value</option>
+                                    <option value="2">2 : &lt; Less than above value</option>
+                                    <option value="3">3 : &gt; Greater than above value</option>
+                                    <option value="4">4 : &lt;= Less than or equal to above value</option>
+                                    <option value="5">5 : &gt;= Greater than or equal to above value</option>
+                                </select>
+                            </div>
+                            <button @click="removeCondition(block, cIdx)" class="text-rose-500 font-bold hover:text-rose-700 pl-1 text-[11px]">×</button>
+                        </div>
+                    </div>
+
+                    <!-- Horizontal Secondary Extra Tags Tags -->
                     <div v-if="block.tags.length > 0" class="flex flex-wrap gap-1.5 items-center pt-1">
                         <span 
                             v-for="(tag, tIdx) in block.tags" 
@@ -142,14 +207,12 @@
                     </div>
 
                     <!-- Fully Scaled Volcurve Viewport Area -->
-                    <div v-if="block.curves && block.curves.length > 0" class="pt-2 space-y-4">
+                    <div v-if="block.curves && block.curves.length > 0" class="pt-1 space-y-4">
                         <div v-for="(curve, cIdx) in block.curves" :key="cIdx" class="bg-slate-50 p-3 rounded border border-slate-200 inline-block min-w-[320px]">
                             <div class="text-xs font-bold text-slate-500 mb-1">
                                 [volcurve] &rarr; <span class="text-blue-700">{{ curve.variable }}</span>
                             </div>
-                            <!-- Inline SVG Chart View -->
                             <svg class="bg-white border border-slate-300 rounded" width="300" height="120" viewBox="0 0 300 120">
-                                <!-- Stronger grid line markers (#cbd5e1 is 2x darker than old background lines) -->
                                 <line x1="0" y1="30" x2="300" y2="30" stroke="#cbd5e1" stroke-width="1" />
                                 <line x1="0" y1="60" x2="300" y2="60" stroke="#cbd5e1" stroke-width="1" />
                                 <line x1="0" y1="90" x2="300" y2="90" stroke="#cbd5e1" stroke-width="1" />
@@ -158,7 +221,6 @@
                                 <line x1="150" y1="0" x2="150" y2="120" stroke="#cbd5e1" stroke-width="1" />
                                 <line x1="225" y1="0" x2="225" y2="120" stroke="#f1f5f9" stroke-width="1" />
 
-                                <!-- Main Plot Path -->
                                 <path 
                                     :d="getSvgPath(curve.points)" 
                                     fill="none" 
@@ -168,7 +230,6 @@
                                     stroke-linejoin="round"
                                 />
                                 
-                                <!-- Render Visual Node Markers -->
                                 <circle 
                                     v-for="(pnt, pIdx) in getVisualPoints(curve.points)" 
                                     :key="pIdx"
@@ -230,6 +291,14 @@
                             let varValue = '';
                             let volume = '';
                             let viewpoint = '2'; 
+                            let trigger = '';
+                            let has3d = false;
+                            let spatial3d = { x: '0', y: '0', z: '0', fade: '0' };
+                            
+                            const conditions = [];
+                            const tags = [];
+                            const curves = [];
+                            let currentCurve = null;
                             let filteredRemaining = [];
 
                             let readIdx = 1;
@@ -241,16 +310,13 @@
                                 volume = lines[5] || '';
                                 readIdx = 6;
                             } else {
+                                // Updated normalization logic: In sound entries, value directly below filename is volume
                                 filename = lines[1] || '';
-                                varValue = lines[2] || '';
-                                volume = lines[3] || '';
-                                readIdx = 4;
+                                volume = lines[2] || '';
+                                readIdx = 3;
                             }
 
-                            const tags = [];
-                            const curves = [];
-                            let currentCurve = null;
-
+                            // Structured line array parsing loop
                             for (let i = readIdx; i < lines.length; i++) {
                                 const line = lines[i];
                                 if (!line) continue;
@@ -260,6 +326,23 @@
                                 if (lowerLine === '[viewpoint]') {
                                     viewpoint = lines[i+1] || '2';
                                     i++; 
+                                } else if (lowerLine === '[3d]') {
+                                    has3d = true;
+                                    spatial3d.x = lines[i+1] || '0';
+                                    spatial3d.y = lines[i+2] || '0';
+                                    spatial3d.z = lines[i+3] || '0';
+                                    spatial3d.fade = lines[i+4] || '0';
+                                    i += 4;
+                                } else if (lowerLine === '[trigger]') {
+                                    trigger = lines[i+1] || '';
+                                    i++;
+                                } else if (lowerLine === '[conditionsingle]') {
+                                    conditions.push({
+                                        varName: lines[i+1] || '',
+                                        varVal: lines[i+2] || '',
+                                        conditionType: lines[i+3] || '1'
+                                    });
+                                    i += 3;
                                 } else if (lowerLine === '[volcurve]') {
                                     currentCurve = { variable: lines[i+1] || 'unknown', points: [] };
                                     curves.push(currentCurve);
@@ -286,6 +369,10 @@
                                 varValue,
                                 volume,
                                 viewpoint,
+                                trigger,
+                                has3d,
+                                spatial3d,
+                                conditions,
                                 tags,
                                 curves,
                                 rawRemaining: filteredRemaining
@@ -296,7 +383,6 @@
 
                 const getVisualPoints = (points) => {
                     if (!points || points.length === 0) return [];
-                    
                     const width = 300;
                     const height = 120;
                     const padding = 12;
@@ -312,7 +398,6 @@
                     return points.map(p => {
                         const pctX = (maxX - minX === 0) ? 0.5 : (p.x - minX) / (maxX - minX);
                         const pctY = (maxY - minY === 0) ? 0.5 : (p.y - minY) / (maxY - minY);
-
                         return {
                             x: padding + pctX * (width - padding * 2),
                             y: (height - padding) - pctY * (height - padding * 2)
@@ -363,6 +448,14 @@
 
                 const deleteBlock = (index) => { blocks.value.splice(index, 1); };
 
+                const addCondition = (block) => {
+                    block.conditions.push({ varName: '', varVal: '', conditionType: '1' });
+                };
+
+                const removeCondition = (block, cIdx) => {
+                    block.conditions.splice(cIdx, 1);
+                };
+
                 const massReplace = () => {
                     if (!findText.value) return;
                     blocks.value.forEach(block => {
@@ -370,6 +463,13 @@
                         if (block.loopVariable) block.loopVariable = block.loopVariable.replaceAll(findText.value, replaceText.value);
                         if (block.varValue) block.varValue = block.varValue.replaceAll(findText.value, replaceText.value);
                         if (block.volume) block.volume = block.volume.replaceAll(findText.value, replaceText.value);
+                        if (block.trigger) block.trigger = block.trigger.replaceAll(findText.value, replaceText.value);
+                        
+                        block.conditions.forEach(c => {
+                            c.varName = c.varName.replaceAll(findText.value, replaceText.value);
+                            c.varVal = c.varVal.replaceAll(findText.value, replaceText.value);
+                        });
+                        
                         block.rawRemaining = block.rawRemaining.map(line => line.replaceAll(findText.value, replaceText.value));
                         
                         if (block.curves) {
@@ -389,10 +489,29 @@
                         if (block.type === 'loopsound') {
                             blockLines.push(block.sampleRate, block.loopVariable, block.varValue, block.volume);
                         } else {
-                            blockLines.push(block.varValue, block.volume);
+                            blockLines.push(block.volume);
+                        }
+
+                        // Write Trigger configuration right below initial base attributes
+                        if (block.trigger) {
+                            blockLines.push('[trigger]', block.trigger);
+                        }
+
+                        // Vertically align conditions stack sequence
+                        if (block.conditions && block.conditions.length > 0) {
+                            block.conditions.forEach(cond => {
+                                if (cond.varName) {
+                                    blockLines.push('[conditionSingle]', cond.varName, cond.varVal, cond.conditionType);
+                                }
+                            });
                         }
 
                         blockLines.push('[viewpoint]', block.viewpoint);
+
+                        // Output Spatial 3D array fields if active
+                        if (block.has3d) {
+                            blockLines.push('[3d]', block.spatial3d.x, block.spatial3d.y, block.spatial3d.z, block.spatial3d.fade);
+                        }
 
                         if (block.curves && block.curves.length > 0) {
                             block.curves.forEach(curve => {
@@ -405,7 +524,8 @@
 
                         if (block.rawRemaining && block.rawRemaining.length > 0) {
                             block.rawRemaining.forEach(l => {
-                                if (l.toLowerCase() !== '[viewpoint]' && l.toLowerCase() !== '[volcurve]' && l.toLowerCase() !== '[pnt]') {
+                                const low = l.toLowerCase();
+                                if (low !== '[viewpoint]' && low !== '[3d]' && low !== '[trigger]' && low !== '[conditionsingle]' && low !== '[volcurve]' && low !== '[pnt]') {
                                     blockLines.push(l);
                                 }
                             });
@@ -435,6 +555,8 @@
                     handleDrop,
                     duplicateBlock,
                     deleteBlock,
+                    addCondition,
+                    removeCondition,
                     massReplace,
                     exportFile,
                     getVisualPoints,
