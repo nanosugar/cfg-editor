@@ -2,181 +2,587 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OMSI Sound Configuration Editor</title>
-    <style>
-        :root {
-            --bg-main: #1a1a1a;
-            --bg-card: #242424;
-            --border-color: #333;
-            --text-main: #e0e0e0;
-            --text-muted: #aaa;
-            --accent-green: #4caf50;
-            --accent-blue: #2196f3;
-            --accent-red: #f44336;
-            --ui-blue: #2d5a88;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 20px;
-            line-height: 1.4;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .block {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-
-        .block-header {
-            font-weight: bold;
-            font-size: 1.1em;
-            margin-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 4px;
-            color: var(--text-muted);
-            font-size: 0.9em;
-        }
-
-        input[type="text"], select {
-            width: 100%;
-            padding: 8px;
-            background-color: #111;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        .vector-icon {
-            display: inline-flex;
-            gap: 2px;
-            font-family: monospace;
-            font-weight: bold;
-            font-size: 0.85em;
-            background: #111;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid #444;
-        }
-        .vector-x { color: var(--accent-red); }
-        .vector-y { color: var(--accent-green); }
-        .vector-z { color: var(--accent-blue); }
-
-        .info-note {
-            background-color: rgba(33, 150, 243, 0.1);
-            border-left: 3px solid var(--accent-blue);
-            padding: 8px 12px;
-            font-size: 0.85em;
-            color: #b3d4fc;
-            margin-top: 8px;
-            border-radius: 0 4px 4px 0;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMSI Sound Config Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-900 p-6">
 
-<div class="container">
+    <div id="app" class="w-full max-w-none text-left">
+        <header class="mb-6 flex justify-between items-center border-b border-slate-200 pb-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-slate-800">OMSI Sound Config Editor</h1>
+                <p class="text-sm text-slate-500">Fully interactive block variables, viewpoint selectors, 3D parameters, conditions, and dynamic grid charts.</p>
+            </div>
+            
+            <button v-if="blocks.length > 0" @click="exportFile" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded shadow-sm text-sm transition">
+                Export File
+            </button>
+        </header>
 
-    <!-- conditionSingle Block -->
-    <div class="block" id="block-condition-single">
-        <div class="block-header">
-            <span>[conditionSingle] Block</span>
-        </div>
-        <div class="form-group">
-            <label>Variable Name</label>
-            <input type="text" placeholder="e.g., cp_schalter_bremse">
-        </div>
-        <div class="form-group">
-            <label>Comparison Value</label>
-            <input type="text" placeholder="e.g., 1">
-        </div>
-    </div>
+        <!-- Drag & Drop File Upload + Mass Edit Panel -->
+        <div 
+            @dragover.prevent="isDraggingFile = true"
+            @dragleave="isDraggingFile = false"
+            @drop.prevent="handleFileDrop"
+            class="p-4 rounded-lg border shadow-xs mb-6 flex gap-4 items-center justify-start flex-wrap transition duration-200"
+            :class="isDraggingFile ? 'border-blue-500 bg-blue-50/50' : 'bg-white border-slate-200'"
+        >
+            <div class="flex items-center gap-3">
+                <input type="file" @change="handleFileUpload" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                <span class="text-xs text-slate-400 font-medium hidden sm:inline">or drop .cfg file directly here</span>
+            </div>
 
-    <!-- 3D Block -->
-    <div class="block" id="block-3d">
-        <div class="block-header">
-            <span>[3D] Block</span>
-            <div class="vector-icon">
-                <span class="vector-x">X</span>
-                <span class="vector-y">Y</span>
-                <span class="vector-z">Z</span>
+            <div v-if="blocks.length > 0" class="flex items-center gap-2 border-l border-slate-200 pl-4 ml-2">
+                <input v-model="findText" type="text" placeholder="Find entry text..." class="border border-slate-300 rounded px-2 py-1 text-sm bg-white">
+                <input v-model="replaceText" type="text" placeholder="Replace with..." class="border border-slate-300 rounded px-2 py-1 text-sm bg-white">
+                <button @click="massReplace" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1 px-3 rounded transition">
+                    Mass Replace
+                </button>
             </div>
         </div>
-        <div class="form-group">
-            <label>X Coordinate (Left/Right)</label>
-            <input type="text" placeholder="0.0">
-        </div>
-        <div class="form-group">
-            <label>Y Coordinate (Front/Back)</label>
-            <input type="text" placeholder="0.0">
-        </div>
-        <div class="form-group">
-            <label>Z Coordinate (Height)</label>
-            <input type="text" placeholder="0.0">
-        </div>
-        <div class="form-group">
-            <label>Full Volume Radius</label>
-            <input type="text" placeholder="e.g., 10">
+
+        <!-- Left-Justified Draggable Workspace -->
+        <div 
+            class="space-y-3 w-full text-left"
+            @dragover.prevent
+            @drop="handleDrop"
+        >
+            <div v-if="blocks.length === 0" class="py-12 border-2 border-dashed border-slate-200 rounded-lg bg-white text-center">
+                <p class="text-slate-400 italic">Select or drop an OMSI sound configuration file above to begin.</p>
+            </div>
+
+            <!-- Block Cards -->
+            <div 
+                v-for="(block, index) in blocks" 
+                :key="block.id"
+                draggable="true"
+                @dragstart="handleDragStart(index)"
+                @dragenter="handleDragEnter(index)"
+                class="bg-white rounded border shadow-xs p-4 flex gap-4 items-start transition duration-150 group text-left w-full"
+                :class="block.type === 'loopsound' ? 'border-l-4 border-l-emerald-500 border-slate-200' : 'border-l-4 border-l-blue-500 border-slate-200'"
+            >
+                <!-- Drag Handle Icon -->
+                <div class="text-slate-300 group-hover:text-slate-400 cursor-grab active:cursor-grabbing select-none font-bold px-1 pt-1">
+                    ☰
+                </div>
+
+                <!-- Block Type Identifier Tag -->
+                <div class="font-mono text-xs font-bold uppercase tracking-wider px-2 py-1 rounded bg-slate-100 min-w-[95px] text-center border border-slate-200 mt-0.5">
+                    [{{ block.type }}]
+                </div>
+
+                <!-- Structured Properties Layout -->
+                <div class="flex-1 font-mono text-sm space-y-4 min-w-0">
+                    
+                    <!-- Top Line Layout: Filename Header, Viewpoint Selector, and 3D Parameters Side-by-Side -->
+                    <div class="flex items-start gap-6 flex-wrap">
+                        <div class="text-slate-900 font-bold break-all bg-slate-50 px-2 py-1 rounded border border-slate-150 mt-1">
+                            🔊 {{ block.filename || 'No File Defined' }}
+                        </div>
+                        
+                        <!-- Viewpoint Configuration Row -->
+                        <div class="flex items-center gap-2 text-xs bg-slate-100 border border-slate-200 rounded px-2 py-1 mt-1">
+                            <span class="font-bold text-slate-500 uppercase tracking-tight">[viewpoint]</span>
+                            <select v-model="block.viewpoint" class="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-slate-700 focus:outline-none font-sans font-medium">
+                                <option value="2">Inside (2)</option>
+                                <option value="1">Outside (1)</option>
+                                <option value="5">Outside + AI (5)</option>
+                            </select>
+                        </div>
+
+                        <!-- 3D Spatial Properties Row -->
+                        <div class="flex flex-col gap-1 text-xs bg-slate-100 border border-slate-200 rounded p-2">
+                            <div class="font-bold text-slate-500 uppercase tracking-tight border-b border-slate-200 pb-0.5 mb-1 flex items-center gap-2">
+                                <span>[3d]</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round">
+                                    <line x1="12" y1="12" x2="12" y2="4" stroke="#16a34a"/> <!-- Y axis / Green -->
+                                    <line x1="12" y1="12" x2="20" y2="12" stroke="#dc2626"/> <!-- X axis / Red -->
+                                    <line x1="12" y1="12" x2="6" y2="18" stroke="#2563eb"/> <!-- Z axis / Blue -->
+                                    <circle cx="12" cy="12" r="1.5" fill="#334155" stroke="none"/>
+                                </svg>
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-slate-400 font-bold">X:</span>
+                                    <input v-model="block.spatial3d.x" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-14 bg-white text-slate-800">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-slate-400 font-bold">Y:</span>
+                                    <input v-model="block.spatial3d.y" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-14 bg-white text-slate-800">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-slate-400 font-bold">Z:</span>
+                                    <input v-model="block.spatial3d.z" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-14 bg-white text-slate-800">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-slate-400 font-bold">Fade [m]:</span>
+                                    <input v-model="block.spatial3d.fade" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-16 bg-white text-slate-800">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Base Editable Fields Stack -->
+                    <div class="text-xs text-slate-600 space-y-2 pl-2 border-l-2 border-slate-200 max-w-xl">
+                        <!-- Sound Fields Configuration Profile -->
+                        <template v-if="block.type === 'sound'">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-400 w-24">Volume:</span> 
+                                <input v-model="block.volume" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                            </div>
+                            
+                            <!-- Trigger Fields Alignment Layout Block -->
+                            <div class="pt-1 border-t border-dashed border-slate-200 mt-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-slate-500 w-24">[trigger]:</span> 
+                                    <input v-model="block.trigger" type="text" placeholder="None" class="border border-slate-300 rounded px-2 py-0.5 w-64 bg-white text-slate-800 font-mono focus:outline-none focus:border-blue-400">
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- LoopSound Fields Configuration Profile -->
+                        <template v-else-if="block.type === 'loopsound'">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-400 w-24">Sample Rate:</span>
+                                <select v-model="block.sampleRate" class="border border-slate-300 rounded px-1.5 py-0.5 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                                    <option value="44100">44100</option>
+                                    <option value="48000">48000</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-400 w-24">Variable:</span> 
+                                <input v-model="block.loopVariable" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-64 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-400 w-24">Variable Value:</span> 
+                                <input v-model="block.varValue" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-400 w-24">Volume:</span> 
+                                <input v-model="block.volume" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                            </div>
+
+                            <div class="pt-2 mt-2 border-t border-dashed border-slate-200">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-slate-500 w-32">Add a [noloop] tag?</span>
+                                    <select v-model="block.noloop" class="border border-slate-300 rounded px-1.5 py-0.5 bg-white text-slate-800">
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Vertical Stack for Multiple conditionSingle Config Entries -->
+                    <div class="text-xs space-y-2 pl-2 border-l-2 border-amber-300 max-w-2xl bg-amber-50/40 p-2 rounded">
+                        <div class="font-bold text-slate-600 flex items-center justify-between">
+                            <span>[conditionSingle]</span>
+                            <button @click="addCondition(block)" class="text-[10px] bg-slate-200 hover:bg-slate-300 px-2 py-0.5 rounded text-slate-700 transition">
+                                + Add Condition
+                            </button>
+                        </div>
+                        <div v-if="block.conditions.length === 0" class="text-slate-400 italic text-[11px]">
+                            No conditional requirements attached.
+                        </div>
+                        <div v-for="(cond, cIdx) in block.conditions" :key="cIdx" class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded p-1.5 shadow-2xs relative">
+                            <div class="flex items-center gap-1">
+                                <span class="text-slate-400 font-semibold">Variable Name:</span>
+                                <input v-model="cond.varName" type="text" class="border border-slate-300 rounded px-1.5 py-0.5 w-40 font-mono bg-white text-slate-800">
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-slate-400 font-semibold">Value:</span>
+                                <input v-model="cond.varVal" type="text" class="border border-slate-300 rounded px-1.5 py-0.5 w-20 font-mono bg-white text-slate-800">
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-slate-400 font-semibold">Condition:</span>
+                                <select v-model="cond.conditionType" class="border border-slate-300 rounded px-1 py-0.5 font-sans bg-white text-slate-800">
+                                    <option value="1">1 : = Equal to above value</option>
+                                    <option value="2">2 : &lt; Less than above value</option>
+                                    <option value="3">3 : &gt; Greater than above value</option>
+                                    <option value="4">4 : &lt;= Less than or equal to above value</option>
+                                    <option value="5">5 : &gt;= Greater than or equal to above value</option>
+                                </select>
+                            </div>
+                            <button @click="removeCondition(block, cIdx)" class="text-rose-500 font-bold hover:text-rose-700 pl-1 text-[11px]">×</button>
+                        </div>
+                    </div>
+
+                    <!-- Horizontal Secondary Extra Tags -->
+                    <div v-if="block.tags.length > 0" class="flex flex-wrap gap-1.5 items-center pt-1">
+                        <span 
+                            v-for="(tag, tIdx) in block.tags" 
+                            :key="tIdx"
+                            class="px-2 py-0.5 rounded text-xs font-bold text-blue-700 bg-blue-50/30 border border-blue-100 whitespace-nowrap"
+                        >
+                            {{ tag }}
+                        </span>
+                    </div>
+
+                    <!-- Fully Scaled Volcurve Viewport Area -->
+                    <div v-if="block.curves && block.curves.length > 0" class="pt-1 space-y-4">
+                        <div v-for="(curve, cIdx) in block.curves" :key="cIdx" class="bg-slate-50 p-3 rounded border border-slate-200 inline-block min-w-[320px]">
+                            <div class="text-xs font-bold text-slate-500 mb-1">
+                                [volcurve] &rarr; <span class="text-blue-700">{{ curve.variable }}</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 italic mb-2 font-normal">A [volcurve] with a variable of -1 means a fade in for the loopsound.</p>
+                            <svg class="bg-white border border-slate-300 rounded" width="300" height="120" viewBox="0 0 300 120">
+                                <line x1="0" y1="30" x2="300" y2="30" stroke="#cbd5e1" stroke-width="1" />
+                                <line x1="0" y1="60" x2="300" y2="60" stroke="#cbd5e1" stroke-width="1" />
+                                <line x1="0" y1="90" x2="300" y2="90" stroke="#cbd5e1" stroke-width="1" />
+                                
+                                <line x1="75" y1="0" x2="75" y2="120" stroke="#f1f5f9" stroke-width="1" />
+                                <line x1="150" y1="0" x2="150" y2="120" stroke="#cbd5e1" stroke-width="1" />
+                                <line x1="225" y1="0" x2="225" y2="120" stroke="#f1f5f9" stroke-width="1" />
+
+                                <path 
+                                    :d="getSvgPath(curve.points)" 
+                                    fill="none" 
+                                    stroke="#2563eb" 
+                                    stroke-width="2" 
+                                    stroke-linecap="round" 
+                                    stroke-linejoin="round"
+                                />
+                                
+                                <circle 
+                                    v-for="(pnt, pIdx) in getVisualPoints(curve.points)" 
+                                    :key="pIdx"
+                                    :cx="pnt.x" 
+                                    :cy="pnt.y" 
+                                    r="4" 
+                                    fill="#1d4ed8"
+                                    stroke="#ffffff"
+                                    stroke-width="1.5"
+                                />
+                            </svg>
+                            <div class="flex gap-2 mt-1.5 overflow-x-auto text-[10px] text-slate-500">
+                                <span v-for="(p, pIdx) in curve.points" :key="pIdx" class="bg-slate-200/60 px-1.5 py-0.5 rounded whitespace-nowrap">
+                                    X: <strong>{{ p.x }}</strong> Y: <strong>{{ p.y }}</strong>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions Container -->
+                <div class="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity ml-auto pr-2">
+                    <button @click="duplicateBlock(index)" class="text-xs text-blue-600 hover:underline">Duplicate</button>
+                    <button @click="deleteBlock(index)" class="text-xs text-rose-600 hover:underline">Delete</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- loopsound Block -->
-    <div class="block" id="block-loopsound">
-        <div class="block-header">
-            <span>[loopsound] Block</span>
-        </div>
-        <div class="form-group">
-            <label>Audio File Path</label>
-            <input type="text" placeholder="e.g., engine_idle.wav">
-        </div>
-        
-        <!-- NoLoop Tag Configuration (Valid only for loopsound) -->
-        <div class="form-group">
-            <label>Add a [noloop] tag?</label>
-            <select id="noloop-select">
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
-            </select>
-        </div>
-    </div>
+    <script>
+        const { createApp, ref } = Vue;
 
-    <!-- volcurve Block -->
-    <div class="block" id="block-volcurve">
-        <div class="block-header">
-            <span>[volcurve] Block</span>
-        </div>
-        <div class="form-group">
-            <label>Control Variable</label>
-            <input type="text" placeholder="e.g., engine_rpm">
-        </div>
-        <div class="info-note">
-            <strong>Note:</strong> Setting the control variable to -1 serves as a fade-in configuration for the [loopsound].
-        </div>
-    </div>
+        createApp({
+            setup() {
+                const blocks = ref([]);
+                const findText = ref('');
+                const replaceText = ref('');
+                const isDraggingFile = ref(false);
+                let draggedIndex = null;
 
-</div>
+                const processRawText = (rawText) => {
+                    const blockRegex = /(?=\[(?:sound|loopsound)\])/i;
+                    const rawBlocks = rawText.split(blockRegex);
+                    
+                    blocks.value = rawBlocks
+                        .map((blockContent, idx) => {
+                            const trimmed = blockContent.trim();
+                            if (!trimmed) return null;
+                            
+                            const lines = trimmed.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                            if (lines.length === 0) return null;
 
+                            const header = lines[0].toLowerCase();
+                            const isLoop = header.includes('loopsound');
+                            
+                            let filename = '';
+                            let sampleRate = '44100';
+                            let loopVariable = '';
+                            let varValue = '';
+                            let volume = '';
+                            let viewpoint = '2'; 
+                            let trigger = '';
+                            let noloop = 'no';
+                            let spatial3d = { x: '0', y: '0', z: '0', fade: '0' };
+                            
+                            const conditions = [];
+                            const tags = [];
+                            const curves = [];
+                            let currentCurve = null;
+                            let filteredRemaining = [];
+
+                            let readIdx = 1;
+                            if (isLoop) {
+                                filename = lines[1] || '';
+                                sampleRate = lines[2] || '44100';
+                                loopVariable = lines[3] || '';
+                                varValue = lines[4] || '';
+                                volume = lines[5] || '';
+                                readIdx = 6;
+                            } else {
+                                filename = lines[1] || '';
+                                volume = lines[2] || '';
+                                readIdx = 3;
+                            }
+
+                            // Structured line array parsing loop
+                            for (let i = readIdx; i < lines.length; i++) {
+                                const line = lines[i];
+                                if (!line) continue;
+                                
+                                const lowerLine = line.toLowerCase();
+                                
+                                if (lowerLine === '[viewpoint]') {
+                                    viewpoint = lines[i+1] || '2';
+                                    i++; 
+                                } else if (lowerLine === '[3d]') {
+                                    spatial3d.x = lines[i+1] || '0';
+                                    spatial3d.y = lines[i+2] || '0';
+                                    spatial3d.z = lines[i+3] || '0';
+                                    spatial3d.fade = lines[i+4] || '0';
+                                    i += 4;
+                                } else if (lowerLine === '[trigger]') {
+                                    trigger = lines[i+1] || '';
+                                    i++;
+                                } else if (lowerLine === '[noloop]') {
+                                    noloop = 'yes';
+                                } else if (lowerLine === '[conditionsingle]') {
+                                    conditions.push({
+                                        varName: lines[i+1] || '',
+                                        varVal: lines[i+2] || '',
+                                        conditionType: lines[i+3] || '1'
+                                    });
+                                    i += 3;
+                                } else if (lowerLine === '[volcurve]') {
+                                    currentCurve = { variable: lines[i+1] || 'unknown', points: [] };
+                                    curves.push(currentCurve);
+                                    i++;
+                                } else if (lowerLine === '[pnt]' && currentCurve) {
+                                    const px = parseFloat(lines[i+1] || 0);
+                                    const py = parseFloat(lines[i+2] || 0);
+                                    currentCurve.points.push({ x: px, y: py });
+                                    i += 2;
+                                } else {
+                                    filteredRemaining.push(line);
+                                    if (line.startsWith('[')) {
+                                        tags.push(line);
+                                    }
+                                }
+                            }
+
+                            return {
+                                id: `b-${idx}-${Date.now()}-${Math.random()}`,
+                                type: isLoop ? 'loopsound' : 'sound',
+                                filename,
+                                sampleRate,
+                                loopVariable,
+                                varValue,
+                                volume,
+                                viewpoint,
+                                trigger,
+                                noloop,
+                                spatial3d,
+                                conditions,
+                                tags,
+                                curves,
+                                rawRemaining: filteredRemaining
+                            };
+                        })
+                        .filter(b => b !== null);
+                };
+
+                const getVisualPoints = (points) => {
+                    if (!points || points.length === 0) return [];
+                    const width = 300;
+                    const height = 120;
+                    const padding = 12;
+                    
+                    const xValues = points.map(p => p.x);
+                    const yValues = points.map(p => p.y);
+                    
+                    const minX = Math.min(...xValues);
+                    const maxX = Math.max(...xValues);
+                    const minY = Math.min(...yValues, 0); 
+                    const maxY = Math.max(...yValues);
+
+                    return points.map(p => {
+                        const pctX = (maxX - minX === 0) ? 0.5 : (p.x - minX) / (maxX - minX);
+                        const pctY = (maxY - minY === 0) ? 0.5 : (p.y - minY) / (maxY - minY);
+                        return {
+                            x: padding + pctX * (width - padding * 2),
+                            y: (height - padding) - pctY * (height - padding * 2)
+                        };
+                    });
+                };
+
+                const getSvgPath = (points) => {
+                    const vPoints = getVisualPoints(points);
+                    if (vPoints.length === 0) return '';
+                    return vPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+                };
+
+                const handleFileUpload = (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    readFile(file);
+                };
+
+                const handleFileDrop = (event) => {
+                    isDraggingFile.value = false;
+                    const file = event.dataTransfer.files[0];
+                    if (!file) return;
+                    readFile(file);
+                };
+
+                const readFile = (file) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => processRawText(e.target.result);
+                    reader.readAsText(file);
+                };
+
+                const handleDragStart = (index) => { draggedIndex = index; };
+                const handleDragEnter = (index) => {
+                    if (draggedIndex === null || draggedIndex === index) return;
+                    const targetItem = blocks.value[draggedIndex];
+                    blocks.value.splice(draggedIndex, 1);
+                    blocks.value.splice(index, 0, targetItem);
+                    draggedIndex = index;
+                };
+                const handleDrop = () => { draggedIndex = null; };
+
+                const duplicateBlock = (index) => {
+                    const clone = JSON.parse(JSON.stringify(blocks.value[index]));
+                    clone.id = `b-clone-${Date.now()}-${Math.random()}`;
+                    blocks.value.splice(index + 1, 0, clone);
+                };
+
+                const deleteBlock = (index) => { blocks.value.splice(index, 1); };
+
+                const addCondition = (block) => {
+                    block.conditions.push({ varName: '', varVal: '', conditionType: '1' });
+                };
+
+                const removeCondition = (block, cIdx) => {
+                    block.conditions.splice(cIdx, 1);
+                };
+
+                const massReplace = () => {
+                    if (!findText.value) return;
+                    blocks.value.forEach(block => {
+                        if (block.filename) block.filename = block.filename.replaceAll(findText.value, replaceText.value);
+                        if (block.loopVariable) block.loopVariable = block.loopVariable.replaceAll(findText.value, replaceText.value);
+                        if (block.varValue) block.varValue = block.varValue.replaceAll(findText.value, replaceText.value);
+                        if (block.volume) block.volume = block.volume.replaceAll(findText.value, replaceText.value);
+                        if (block.type === 'sound' && block.trigger) block.trigger = block.trigger.replaceAll(findText.value, replaceText.value);
+                        
+                        block.conditions.forEach(c => {
+                            c.varName = c.varName.replaceAll(findText.value, replaceText.value);
+                            c.varVal = c.varVal.replaceAll(findText.value, replaceText.value);
+                        });
+                        
+                        block.rawRemaining = block.rawRemaining.map(line => line.replaceAll(findText.value, replaceText.value));
+                        
+                        if (block.curves) {
+                            block.curves.forEach(c => {
+                                c.variable = c.variable.replaceAll(findText.value, replaceText.value);
+                            });
+                        }
+                    });
+                    alert(`Mass replacement complete.`);
+                };
+
+                const exportFile = () => {
+                    const outputText = blocks.value.map(block => {
+                        const header = block.type === 'loopsound' ? '[loopsound]' : '[sound]';
+                        let blockLines = [header, block.filename];
+                        
+                        if (block.type === 'loopsound') {
+                            blockLines.push(block.sampleRate, block.loopVariable, block.varValue, block.volume);
+                            
+                            // Write [noloop] if toggled
+                            if (block.noloop === 'yes') {
+                                blockLines.push('[noloop]');
+                            }
+                        } else {
+                            blockLines.push(block.volume);
+                            
+                            // Write [trigger] if populated on standard sounds
+                            if (block.trigger) {
+                                blockLines.push('[trigger]', block.trigger);
+                            }
+                        }
+
+                        // Vertically align conditions stack sequence
+                        if (block.conditions && block.conditions.length > 0) {
+                            block.conditions.forEach(cond => {
+                                if (cond.varName) {
+                                    blockLines.push('[conditionSingle]', cond.varName, cond.varVal, cond.conditionType);
+                                }
+                            });
+                        }
+
+                        blockLines.push('[viewpoint]', block.viewpoint);
+
+                        // Output Spatial 3D array fields (Mandatory)
+                        blockLines.push('[3d]', block.spatial3d.x, block.spatial3d.y, block.spatial3d.z, block.spatial3d.fade);
+
+                        if (block.curves && block.curves.length > 0) {
+                            block.curves.forEach(curve => {
+                                blockLines.push('[volcurve]', curve.variable);
+                                curve.points.forEach(pnt => {
+                                    blockLines.push('[pnt]', pnt.x.toString(), pnt.y.toString());
+                                });
+                            });
+                        }
+
+                        if (block.rawRemaining && block.rawRemaining.length > 0) {
+                            block.rawRemaining.forEach(l => {
+                                const low = l.toLowerCase();
+                                if (low !== '[viewpoint]' && low !== '[3d]' && low !== '[trigger]' && low !== '[noloop]' && low !== '[conditionsingle]' && low !== '[volcurve]' && low !== '[pnt]') {
+                                    blockLines.push(l);
+                                }
+                            });
+                        }
+
+                        return blockLines.join('\n');
+                    }).join('\n\n');
+
+                    const blob = new Blob([outputText], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'sound_edited.cfg';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                };
+
+                return {
+                    blocks,
+                    findText,
+                    replaceText,
+                    isDraggingFile,
+                    handleFileUpload,
+                    handleFileDrop,
+                    handleDragStart,
+                    handleDragEnter,
+                    handleDrop,
+                    duplicateBlock,
+                    deleteBlock,
+                    addCondition,
+                    removeCondition,
+                    massReplace,
+                    exportFile,
+                    getVisualPoints,
+                    getSvgPath
+                };
+            }
+        }).mount('#app');
+    </script>
 </body>
 </html>
