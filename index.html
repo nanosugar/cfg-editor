@@ -13,7 +13,7 @@
         <header class="mb-6 flex justify-between items-center border-b border-slate-200 pb-4">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-slate-800">OMSI Sound Config Editor</h1>
-                <p class="text-sm text-slate-500">Structured property views with automatic volcurve XY grid charts.</p>
+                <p class="text-sm text-slate-500">Fully interactive block variables, viewpoint selectors, and dynamic grid charts.</p>
             </div>
             
             <button v-if="blocks.length > 0" @click="exportFile" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded shadow-sm text-sm transition">
@@ -75,22 +75,62 @@
 
                 <!-- Structured Properties Layout -->
                 <div class="flex-1 font-mono text-sm space-y-3 min-w-0">
-                    <!-- File Name Header -->
-                    <div class="text-slate-900 font-bold break-all bg-slate-50 px-2 py-1 rounded border border-slate-150 inline-block">
-                        🔊 {{ block.filename || 'No File Defined' }}
+                    <!-- Filename Header & Viewpoint Selector Inline -->
+                    <div class="flex items-center gap-6 flex-wrap">
+                        <div class="text-slate-900 font-bold break-all bg-slate-50 px-2 py-1 rounded border border-slate-150">
+                            🔊 {{ block.filename || 'No File Defined' }}
+                        </div>
+                        
+                        <!-- Dynamic Viewpoint Row Integration -->
+                        <div class="flex items-center gap-2 text-xs bg-slate-100 border border-slate-200 rounded px-2 py-1">
+                            <span class="font-bold text-slate-500 uppercase tracking-tight">[viewpoint]</span>
+                            <select v-model="block.viewpoint" class="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-slate-700 focus:outline-none font-sans font-medium">
+                                <option value="2">Inside</option>
+                                <option value="1">Outside</option>
+                                <option value="5">Outside + AI</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- Vertical Properties Stack -->
-                    <div class="text-xs text-slate-600 space-y-1 pl-2 border-l-2 border-slate-200">
-                        <div v-if="block.type === 'sound'"><span class="font-bold text-slate-400">Volume:</span> {{ block.volume }}</div>
-                        <template v-else-if="block.type === 'loopsound'">
-                            <div><span class="font-bold text-slate-400">Sample Rate:</span> {{ block.sampleRate }}</div>
-                            <div><span class="font-bold text-slate-400">Variable:</span> {{ block.loopVariable }}</div>
-                            <div><span class="font-bold text-slate-400">Volume:</span> {{ block.volume }}</div>
+                    <!-- Interactive Editable Properties Stack -->
+                    <div class="text-xs text-slate-600 space-y-2 pl-2 border-l-2 border-slate-200 max-w-xl">
+                        <!-- Sound Fields Configuration -->
+                        <template v-if="block.type === 'sound'">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-400 w-24">Variable Value:</span> 
+                                <input v-model="block.varValue" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-400 w-24">Volume:</span> 
+                                <input v-model="block.volume" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                            </div>
+                        </template>
+
+                        <!-- LoopSound Fields Configuration -->
+                        <template v-slot:default v-else-if="block.type === 'loopsound'">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-400 w-24">Sample Rate:</span>
+                                <select v-model="block.sampleRate" class="border border-slate-300 rounded px-1.5 py-0.5 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                                    <option value="44100">44100</option>
+                                    <option value="48000">48000</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-400 w-24">Variable:</span> 
+                                <input v-model="block.loopVariable" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-64 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-400 w-24">Variable Value:</span> 
+                                <input v-model="block.varValue" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-400 w-24">Volume:</span> 
+                                <input v-model="block.volume" type="text" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 focus:outline-none focus:border-blue-400">
+                            </div>
                         </template>
                     </div>
 
-                    <!-- Horizontal Secondary Entries (Tags like [3d], [trigger]) -->
+                    <!-- Horizontal Secondary Functional Tags -->
                     <div v-if="block.tags.length > 0" class="flex flex-wrap gap-1.5 items-center pt-1">
                         <span 
                             v-for="(tag, tIdx) in block.tags" 
@@ -101,20 +141,24 @@
                         </span>
                     </div>
 
-                    <!-- Volcurve XY Grid Rendering System -->
+                    <!-- Fully Scaled Volcurve Viewport Area -->
                     <div v-if="block.curves && block.curves.length > 0" class="pt-2 space-y-4">
                         <div v-for="(curve, cIdx) in block.curves" :key="cIdx" class="bg-slate-50 p-3 rounded border border-slate-200 inline-block min-w-[320px]">
                             <div class="text-xs font-bold text-slate-500 mb-1">
                                 [volcurve] &rarr; <span class="text-blue-700">{{ curve.variable }}</span>
                             </div>
-                            <!-- Inline SVG Chart Layout -->
+                            <!-- Inline SVG Chart View -->
                             <svg class="bg-white border border-slate-300 rounded" width="300" height="120" viewBox="0 0 300 120">
-                                <!-- Grid background guidelines -->
-                                <line x1="0" y1="30" x2="300" y2="30" stroke="#f1f5f9" stroke-width="1" />
-                                <line x1="0" y1="60" x2="300" y2="60" stroke="#f1f5f9" stroke-width="1" />
-                                <line x1="0" y1="90" x2="300" y2="90" stroke="#f1f5f9" stroke-width="1" />
+                                <!-- Stronger grid line markers (#cbd5e1 is 2x darker than old background lines) -->
+                                <line x1="0" y1="30" x2="300" y2="30" stroke="#cbd5e1" stroke-width="1" />
+                                <line x1="0" y1="60" x2="300" y2="60" stroke="#cbd5e1" stroke-width="1" />
+                                <line x1="0" y1="90" x2="300" y2="90" stroke="#cbd5e1" stroke-width="1" />
                                 
-                                <!-- Render continuous configuration line paths -->
+                                <line x1="75" y1="0" x2="75" y2="120" stroke="#f1f5f9" stroke-width="1" />
+                                <line x1="150" y1="0" x2="150" y2="120" stroke="#cbd5e1" stroke-width="1" />
+                                <line x1="225" y1="0" x2="225" y2="120" stroke="#f1f5f9" stroke-width="1" />
+
+                                <!-- Main Plot Path -->
                                 <path 
                                     :d="getSvgPath(curve.points)" 
                                     fill="none" 
@@ -124,7 +168,7 @@
                                     stroke-linejoin="round"
                                 />
                                 
-                                <!-- Render plotted coordinate markers -->
+                                <!-- Render Visual Node Markers -->
                                 <circle 
                                     v-for="(pnt, pIdx) in getVisualPoints(curve.points)" 
                                     :key="pIdx"
@@ -136,7 +180,6 @@
                                     stroke-width="1.5"
                                 />
                             </svg>
-                            <!-- Print out control values inline under graphs for tracking -->
                             <div class="flex gap-2 mt-1.5 overflow-x-auto text-[10px] text-slate-500">
                                 <span v-for="(p, pIdx) in curve.points" :key="pIdx" class="bg-slate-200/60 px-1.5 py-0.5 rounded whitespace-nowrap">
                                     X: <strong>{{ p.x }}</strong> Y: <strong>{{ p.y }}</strong>
@@ -180,41 +223,52 @@
                             const isLoop = header.includes('loopsound');
                             
                             let filename = '';
-                            let volume = '';
-                            let sampleRate = '';
+                            let sampleRate = '44100';
                             let loopVariable = '';
-                            let remainingLines = [];
+                            let varValue = '';
+                            let volume = '';
+                            let viewpoint = '2'; // Default to Inside (2) if not specified
+                            let filteredRemaining = [];
 
-                            // Structural alignment step based on engine block patterns
+                            // Structural variables parsing alignment based on configuration profiles
+                            let readIdx = 1;
                             if (isLoop) {
                                 filename = lines[1] || '';
                                 sampleRate = lines[2] || '';
                                 loopVariable = lines[3] || '';
-                                volume = lines[4] || '';
-                                remainingLines = lines.slice(5);
+                                varValue = lines[4] || '';
+                                volume = lines[5] || '';
+                                readIdx = 6;
                             } else {
                                 filename = lines[1] || '';
-                                volume = lines[2] || '';
-                                remainingLines = lines.slice(3);
+                                varValue = lines[2] || '';
+                                volume = lines[3] || '';
+                                readIdx = 4;
                             }
 
-                            // Sub-parser to pull isolated [volcurve] metrics out for visualization
                             const tags = [];
                             const curves = [];
                             let currentCurve = null;
 
-                            for (let i = 0; i < remainingLines.length; i++) {
-                                const line = remainingLines[i];
-                                if (line.toLowerCase() === '[volcurve]') {
-                                    currentCurve = { variable: remainingLines[i+1] || 'unknown', points: [] };
+                            // Loop rest of file body to pull viewpoint and curves mapping properties out safely
+                            for (let i = readIdx; i < lines.length; i++) {
+                                const line = lines[i];
+                                const lowerLine = line.toLowerCase();
+                                
+                                if (lowerLine === '[viewpoint]') {
+                                    viewpoint = lines[i+1] || '2';
+                                    i++; // Skip values tracker index
+                                } else if (lowerLine === '[volcurve]') {
+                                    currentCurve = { variable: lines[i+1] || 'unknown', points: [] };
                                     curves.push(currentCurve);
-                                    i++; // Skip variable line entry processing block
-                                } else if (line.toLowerCase() === '[pnt]' && currentCurve) {
-                                    const px = parseFloat(remainingLines[i+1] || 0);
-                                    const py = parseFloat(remainingLines[i+2] || 0);
+                                    i++;
+                                } else if (lowerLine === '[pnt]' && currentCurve) {
+                                    const px = parseFloat(lines[i+1] || 0);
+                                    const py = parseFloat(lines[i+2] || 0);
                                     currentCurve.points.push({ x: px, y: py });
-                                    i += 2; // Skip raw value offsets inside iteration index loops
+                                    i += 2;
                                 } else {
+                                    filteredRemaining.push(line);
                                     if (line.startsWith('[')) {
                                         tags.push(line);
                                     }
@@ -225,38 +279,39 @@
                                 id: `b-${idx}-${Date.now()}-${Math.random()}`,
                                 type: isLoop ? 'loopsound' : 'sound',
                                 filename,
-                                volume,
                                 sampleRate,
                                 loopVariable,
+                                varValue,
+                                volume,
+                                viewpoint,
                                 tags,
                                 curves,
-                                rawRemaining: remainingLines // Keep all extra tags intact safely for exports
+                                rawRemaining: filteredRemaining
                             };
                         })
                         .filter(b => b !== null);
                 };
 
-                // SVG coordinates calculation handlers
+                // SVG coordinates calculation handlers supporting complete scale adjustments
                 const getVisualPoints = (points) => {
                     if (!points || points.length === 0) return [];
                     
-                    // Chart bounds properties definitions
                     const width = 300;
                     const height = 120;
                     const padding = 12;
                     
-                    // Dynamic scaling to map configuration limits onto visual frames cleanly
                     const xValues = points.map(p => p.x);
                     const yValues = points.map(p => p.y);
                     
-                    const minX = Math.min(...xValues, 0);
-                    const maxX = Math.max(...xValues, 1);
-                    const maxY = Math.max(...yValues, 1); // Peak value acts as top height coordinate limit
+                    const minX = Math.min(...xValues);
+                    const maxX = Math.max(...xValues);
+                    const minY = Math.min(...yValues, 0); // Scale from zero base floor
+                    const maxY = Math.max(...yValues);
 
                     return points.map(p => {
-                        const pctX = (p.x - minX) / (maxX - minX || 1);
-                        // Invert Y coordinates since SVG origin starts upper left
-                        const pctY = p.y / (maxY || 1); 
+                        // Fit to exact visual box borders completely
+                        const pctX = (maxX - minX === 0) ? 0.5 : (p.x - minX) / (maxX - minX);
+                        const pctY = (maxY - minY === 0) ? 0.5 : (p.y - minY) / (maxY - minY);
 
                         return {
                             x: padding + pctX * (width - padding * 2),
@@ -313,9 +368,10 @@
                     blocks.value.forEach(block => {
                         if (block.filename) block.filename = block.filename.replaceAll(findText.value, replaceText.value);
                         if (block.loopVariable) block.loopVariable = block.loopVariable.replaceAll(findText.value, replaceText.value);
+                        if (block.varValue) block.varValue = block.varValue.replaceAll(findText.value, replaceText.value);
+                        if (block.volume) block.volume = block.volume.replaceAll(findText.value, replaceText.value);
                         block.rawRemaining = block.rawRemaining.map(line => line.replaceAll(findText.value, replaceText.value));
                         
-                        // Sync visual objects array structures post text replacement routines
                         if (block.curves) {
                             block.curves.forEach(c => {
                                 c.variable = c.variable.replaceAll(findText.value, replaceText.value);
@@ -328,19 +384,38 @@
                 const exportFile = () => {
                     const outputText = blocks.value.map(block => {
                         const header = block.type === 'loopsound' ? '[loopsound]' : '[sound]';
-                        let blockBody = '';
+                        let blockLines = [header, block.filename];
                         
+                        // Assemble base lines matching precise data corrections
                         if (block.type === 'loopsound') {
-                            blockBody = `${block.filename}\n${block.sampleRate}\n${block.loopVariable}\n${block.volume}`;
+                            blockLines.push(block.sampleRate, block.loopVariable, block.varValue, block.volume);
                         } else {
-                            blockBody = `${block.filename}\n${block.volume}`;
+                            blockLines.push(block.varValue, block.volume);
                         }
 
+                        // Re-inject viewpoint configurations into clean export array position strings
+                        blockLines.push('[viewpoint]', block.viewpoint);
+
+                        // Re-assemble custom parsed curve objects explicitly
+                        if (block.curves && block.curves.length > 0) {
+                            block.curves.forEach(curve => {
+                                blockLines.push('[volcurve]', curve.variable);
+                                curve.points.forEach(pnt => {
+                                    blockLines.push('[pnt]', pnt.x.toString(), pnt.y.toString());
+                                });
+                            });
+                        }
+
+                        // Append secondary flags left over
                         if (block.rawRemaining && block.rawRemaining.length > 0) {
-                            blockBody += `\n${block.rawRemaining.join('\n')}`;
+                            block.rawRemaining.forEach(l => {
+                                if (l.toLowerCase() !== '[viewpoint]' && l.toLowerCase() !== '[volcurve]' && l.toLowerCase() !== '[pnt]') {
+                                    blockLines.push(l);
+                                }
+                            });
                         }
 
-                        return `${header}\n${blockBody}`;
+                        return blockLines.join('\n');
                     }).join('\n\n');
 
                     const blob = new Blob([outputText], { type: 'text/plain;charset=utf-8' });
