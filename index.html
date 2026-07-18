@@ -49,29 +49,39 @@
             <div 
                 v-for="(block, index) in blocks" 
                 :key="block.id"
-                draggable="true"
+                :draggable="block.isDraggable"
                 @dragstart="handleDragStart(index)"
                 @dragenter="handleDragEnter(index)"
-                class="bg-white rounded border shadow-xs p-4 flex gap-4 items-start transition duration-150 group text-left w-fit max-w-full"
-                :class="block.type === 'loopsound' ? 'border-l-4 border-l-emerald-500 border-slate-200' : 'border-l-4 border-l-blue-500 border-slate-200'"
+                class="bg-white rounded border shadow-xs p-4 flex gap-4 items-start transition duration-150 group text-left w-full max-w-5xl"
+                :class="block.type === 'loopsound' ? 'border-l-[16px] border-l-emerald-500 border-slate-200' : 'border-l-[16px] border-l-blue-500 border-slate-200'"
             >
                 <!-- Drag Handle -->
-                <div class="flex flex-col items-center gap-1 mt-1">
+                <div class="flex flex-col items-center gap-2 mt-1 mr-1">
                     <button @click="block.collapsed = !block.collapsed" class="text-slate-500 hover:text-slate-800 text-xs">
                         {{ block.collapsed ? '▶' : '▼' }}
                     </button>
-                    <div class="text-slate-300 group-hover:text-slate-400 cursor-grab active:cursor-grabbing select-none font-bold">☰</div>
+                    <div 
+                        @mouseenter="block.isDraggable = true"
+                        @mouseleave="block.isDraggable = false"
+                        class="text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing select-none font-bold text-lg px-1"
+                    >
+                        ☰
+                    </div>
                 </div>
 
-                <div class="flex-1 font-mono text-sm min-w-0">
+                <div class="flex-1 font-mono text-sm min-w-0 w-full">
                     
                     <!-- Header Area: Filename, Viewpoint, and 3D -->
-                    <div class="flex gap-6 items-start flex-wrap">
+                    <div class="flex gap-6 items-start flex-wrap w-full">
                         
                         <!-- Left Stack: Filename & Viewpoint -->
-                        <div class="flex flex-col gap-2">
-                            <div class="bg-slate-50 px-2 py-1 rounded border w-fit">
-                                <input v-model="block.filename" class="font-bold bg-transparent outline-none min-w-[250px]" placeholder="No File Defined">
+                        <div class="flex flex-col gap-2 flex-1 min-w-[300px]">
+                            <div class="bg-slate-50 px-2 py-1 rounded border w-full flex">
+                                <input 
+                                    v-model="block.filename" 
+                                    class="font-bold bg-transparent outline-none w-full placeholder:text-slate-400 placeholder:italic placeholder:font-normal" 
+                                    placeholder="Filename set by T.F. function in a script"
+                                >
                             </div>
                             
                             <div v-if="!block.collapsed" class="flex items-center gap-2 text-xs bg-slate-100 border border-slate-200 rounded px-2 py-1 w-fit">
@@ -85,7 +95,7 @@
                         </div>
 
                         <!-- Right Stack: 3D Spatial Properties -->
-                        <div v-if="!block.collapsed" class="flex flex-col gap-1 text-xs bg-slate-100 border border-slate-200 rounded p-2 min-w-[140px]">
+                        <div v-if="!block.collapsed" class="flex flex-col gap-1 text-xs bg-slate-100 border border-slate-200 rounded p-2">
                             <div class="font-bold text-slate-500 uppercase tracking-tight border-b border-slate-200 pb-0.5 mb-1 flex items-center gap-2">
                                 <span>[3d]</span>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round">
@@ -95,23 +105,9 @@
                                     <circle cx="12" cy="12" r="1.5" fill="#334155" stroke="none"/>
                                 </svg>
                             </div>
-                            <div class="flex flex-col gap-1.5">
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="text-slate-400 font-bold">X:</span>
-                                    <input v-model="block.spatial3d.x" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-16 bg-white text-slate-800">
-                                </div>
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="text-slate-400 font-bold">Y:</span>
-                                    <input v-model="block.spatial3d.y" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-16 bg-white text-slate-800">
-                                </div>
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="text-slate-400 font-bold">Z:</span>
-                                    <input v-model="block.spatial3d.z" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-16 bg-white text-slate-800">
-                                </div>
-                                <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
-                                    <span class="text-slate-400 font-bold">Fade:</span>
-                                    <input v-model="block.spatial3d.fade" type="text" class="border border-slate-300 rounded px-1 py-0.5 w-16 bg-white text-slate-800">
-                                </div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-slate-400 font-bold whitespace-nowrap">X / Y / Z / Fade:</span>
+                                <input v-model="block.spatial3d" type="text" placeholder="0 0 0 0" class="border border-slate-300 rounded px-2 py-0.5 w-48 bg-white text-slate-800 font-mono tracking-widest text-center">
                             </div>
                         </div>
                     </div>
@@ -293,7 +289,7 @@
                 </div>
                 
                 <!-- Quick Actions -->
-                <div class="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity ml-auto pl-4">
+                <div class="flex flex-col items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity ml-auto pl-4">
                     <button @click="duplicateBlock(index)" class="text-xs text-blue-600 hover:underline">Duplicate</button>
                     <button @click="deleteBlock(index)" class="text-xs text-rose-600 hover:underline">Delete</button>
                 </div>
@@ -320,7 +316,6 @@
                 const isDraggingFile = ref(false);
                 let draggedIndex = null;
                 
-                // Computed property to fix the HTML parsing issue
                 const isAllCollapsed = computed(() => {
                     if (blocks.value.length === 0) return true;
                     return blocks.value.every(b => b.collapsed);
@@ -335,7 +330,8 @@
                             const trimmed = blockContent.trim();
                             if (!trimmed) return null;
                             
-                            const lines = trimmed.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                            // Don't filter out empty strings here so we catch blank filenames
+                            const lines = trimmed.split('\n').map(l => l.trim());
                             if (lines.length === 0) return null;
 
                             const header = lines[0].toLowerCase();
@@ -349,7 +345,7 @@
                             let viewpoint = '2'; 
                             let trigger = '';
                             let noloop = 'no';
-                            let spatial3d = { x: '0', y: '0', z: '0', fade: '0' };
+                            let spatial3d = "0 0 0 0";
                             
                             const conditions = [];
                             const tags = [];
@@ -381,10 +377,11 @@
                                     viewpoint = lines[i+1] || '2';
                                     i++; 
                                 } else if (lowerLine === '[3d]') {
-                                    spatial3d.x = lines[i+1] || '0';
-                                    spatial3d.y = lines[i+2] || '0';
-                                    spatial3d.z = lines[i+3] || '0';
-                                    spatial3d.fade = lines[i+4] || '0';
+                                    const x = lines[i+1] || '0';
+                                    const y = lines[i+2] || '0';
+                                    const z = lines[i+3] || '0';
+                                    const fade = lines[i+4] || '0';
+                                    spatial3d = `${x} ${y} ${z} ${fade}`;
                                     i += 4;
                                 } else if (lowerLine === '[trigger]') {
                                     trigger = lines[i+1] || '';
@@ -420,6 +417,7 @@
                                 type: isLoop ? 'loopsound' : 'sound',
                                 filename,
                                 collapsed: true,
+                                isDraggable: false,
                                 sampleRate,
                                 loopVariable,
                                 varValue,
@@ -543,6 +541,10 @@
                                 c.variable = c.variable.replaceAll(findText.value, replaceText.value);
                             });
                         }
+                        
+                        if (block.spatial3d) {
+                            block.spatial3d = block.spatial3d.replaceAll(findText.value, replaceText.value);
+                        }
                     });
                     alert(`Mass replacement complete.`);
                 };
@@ -575,7 +577,9 @@
                         }
 
                         blockLines.push('[viewpoint]', block.viewpoint);
-                        blockLines.push('[3d]', block.spatial3d.x, block.spatial3d.y, block.spatial3d.z, block.spatial3d.fade);
+                        
+                        const s3d = (block.spatial3d || "0 0 0 0").split(/\s+/);
+                        blockLines.push('[3d]', s3d[0]||'0', s3d[1]||'0', s3d[2]||'0', s3d[3]||'0');
 
                         if (block.curves && block.curves.length > 0) {
                             block.curves.forEach(curve => {
@@ -612,7 +616,7 @@
                     findText,
                     replaceText,
                     isDraggingFile,
-                    isAllCollapsed, // Now exported so the template can read it
+                    isAllCollapsed,
                     handleFileUpload,
                     handleFileDrop,
                     handleDragStart,
