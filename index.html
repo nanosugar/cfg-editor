@@ -412,18 +412,22 @@
                             let currentCurve = null;
                 
                             while (i < lines.length) {
-                                let cmdLine = lines[i] ? lines[i].trim() : '';
+                                let rawLine = lines[i] || '';
+                                let cmdLine = rawLine.trim();
                                 let cmdLower = cmdLine.toLowerCase();
-                
-                                if (cmdLower === '') {
-                                    i++;
-                                    continue;
-                                }
-                
+                            
+                                // 1. If we hit another block header, the current block is finished.
                                 if (cmdLower === '[sound]' || cmdLower === '[loopsound]') {
                                     break;
                                 }
-                
+                            
+                                // 2. Ignore comments and empty lines safely
+                                if (cmdLine === '' || cmdLine.startsWith('//') || cmdLine.startsWith(';')) {
+                                    i++;
+                                    continue;
+                                }
+                            
+                                // 3. Existing property parsing
                                 if (cmdLower === '[viewpoint]') {
                                     block.viewpoint = (lines[i+1] || '2').trim();
                                     i += 2;
@@ -458,20 +462,13 @@
                                         currentCurve.points.push({ x: px, y: py });
                                         i += 3;
                                     } else {
-                                        break;
+                                        i++; // Orphaned [pnt], skip it
                                     }
                                 } else {
-                                    break;
+                                    // 4. Everything else (including junk lines) is skipped, not broken.
+                                    i++;
                                 }
                             }
-                            blocks.value.push(block);
-                        } else {
-                            if (hasProcessedABlock) {
-                                currentRawText.push(lineStr);
-                            }
-                            i++;
-                        }
-                    }
                 };
 
                 const getVisualPoints = (points) => {
